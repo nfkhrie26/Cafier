@@ -13,7 +13,6 @@ namespace Psy\Command;
 
 use Psy\CodeCleanerAware;
 use Psy\ContextAware;
-use Psy\Output\ShellOutputAdapter;
 use Psy\Readline\ReadlineAware;
 use Psy\Shell;
 use Psy\VarDumper\PresenterAware;
@@ -293,13 +292,5 @@ abstract class Command extends BaseCommand
         return $table
             ->setRows([])
             ->setStyle($style);
-    }
-
-    /**
-     * Get a ShellOutputAdapter for the given output.
-     */
-    protected function shellOutput(OutputInterface $output): ShellOutputAdapter
-    {
-        return new ShellOutputAdapter($output);
     }
 }

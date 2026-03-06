@@ -141,7 +141,7 @@ class Paginator
 	{
 		return $this->itemCount === null
 			? null
-			: max(0, (int) ceil($this->itemCount / $this->itemsPerPage));
+			: (int) ceil($this->itemCount / $this->itemsPerPage);
 	}
 
 
@@ -207,6 +207,6 @@ class Paginator
 	{
 		return $this->itemCount === null
 			? $this->itemsPerPage
-			: max(0, min($this->itemsPerPage, $this->itemCount - $this->getPageIndex() * $this->itemsPerPage));
+			: min($this->itemsPerPage, $this->itemCount - $this->getPageIndex() * $this->itemsPerPage);
 	}
 }

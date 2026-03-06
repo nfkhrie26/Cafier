@@ -22,24 +22,23 @@ final class Callback
 
 	/**
 	 * Invokes internal PHP function with own error handler.
-	 * @param  callable-string  $function
 	 * @param  list<mixed>  $args
-	 * @param  callable(string, int): (bool|void|null)  $onError
+	 * @param  callable(string, int): ?bool  $onError
 	 */
 	public static function invokeSafe(string $function, array $args, callable $onError): mixed
 	{
-		$prev = set_error_handler(function (int $severity, string $message, string $file, int $line) use ($onError, &$prev, $function): bool {
+		$prev = set_error_handler(function ($severity, $message, $file) use ($onError, &$prev, $function): ?bool {
 			if ($file === __FILE__) {
 				$msg = ini_get('html_errors')
 					? Html::htmlToText($message)
 					: $message;
-				$msg = (string) preg_replace("#^$function\\(.*?\\): #", '', $msg);
+				$msg = preg_replace("#^$function\\(.*?\\): #", '', $msg);
 				if ($onError($msg, $severity) !== false) {
-					return true;
+					return null;
 				}
 			}
 
-			return $prev ? $prev(...func_get_args()) !== false : false;
+			return $prev ? $prev(...func_get_args()) : false;
 		});
 
 		try {
@@ -53,7 +52,7 @@ final class Callback
 	/**
 	 * Checks that $callable is valid PHP callback. Otherwise throws exception. If the $syntax is set to true, only verifies
 	 * that $callable has a valid structure to be used as a callback, but does not verify if the class or method actually exists.
-	 * @return callable
+	 * @return callable(): mixed
 	 * @throws Nette\InvalidArgumentException
 	 */
 	public static function check(mixed $callable, bool $syntax = false): mixed
@@ -87,10 +86,10 @@ final class Callback
 
 	/**
 	 * Returns reflection for method or function used in PHP callback.
-	 * @param  callable  $callable  type check is escalated to ReflectionException
+	 * @param  callable(): mixed  $callable  type check is escalated to ReflectionException
 	 * @throws \ReflectionException  if callback is not valid
 	 */
-	public static function toReflection(mixed $callable): \ReflectionMethod|\ReflectionFunction
+	public static function toReflection($callable): \ReflectionMethod|\ReflectionFunction
 	{
 		if ($callable instanceof \Closure) {
 			$callable = self::unwrap($callable);
@@ -103,7 +102,6 @@ final class Callback
 		} elseif (is_object($callable) && !$callable instanceof \Closure) {
 			return new ReflectionMethod($callable, '__invoke');
 		} else {
-			assert($callable instanceof \Closure || is_string($callable));
 			return new \ReflectionFunction($callable);
 		}
 	}
@@ -111,6 +109,7 @@ final class Callback
 
 	/**
 	 * Checks whether PHP callback is function or static method.
+	 * @param  callable(): mixed  $callable
 	 */
 	public static function isStatic(callable $callable): bool
 	{
@@ -120,9 +119,10 @@ final class Callback
 
 	/**
 	 * Unwraps closure created by Closure::fromCallable().
-	 * @return callable|array{object|class-string, string}|string
+	 * @param  \Closure(): mixed  $closure
+	 * @return \Closure|array{object|class-string, string}|callable-string
 	 */
-	public static function unwrap(\Closure $closure): callable|array|string
+	public static function unwrap(\Closure $closure): callable|array
 	{
 		$r = new \ReflectionFunction($closure);
 		$class = $r->getClosureScopeClass()?->name;

@@ -11,6 +11,7 @@
 
 namespace Psy\Command;
 
+use Psy\Output\ShellOutput;
 use Symfony\Component\Console\Exception\CommandNotFoundException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -57,11 +58,9 @@ class HelpCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $shellOutput = $this->shellOutput($output);
-
         if ($this->command !== null) {
             // help for an individual command
-            $shellOutput->page($this->command->asText());
+            $output->page($this->command->asText());
             $this->command = null;
         } elseif ($name = $input->getArgument('command_name')) {
             // help for an individual command
@@ -79,7 +78,7 @@ class HelpCommand extends Command
                 return 1;
             }
 
-            $shellOutput->page($cmd->asText());
+            $output->page($cmd->asText());
         } else {
             // list available commands
             $commands = $this->getApplication()->all();
@@ -104,11 +103,15 @@ class HelpCommand extends Command
                 ]);
             }
 
-            $shellOutput->startPaging();
+            if ($output instanceof ShellOutput) {
+                $output->startPaging();
+            }
 
             $table->render();
 
-            $shellOutput->stopPaging();
+            if ($output instanceof ShellOutput) {
+                $output->stopPaging();
+            }
         }
 
         return 0;

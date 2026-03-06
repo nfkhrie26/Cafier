@@ -11,7 +11,7 @@
 
 namespace Psy\Command;
 
-use Psy\Output\ShellOutputAdapter;
+use Psy\Output\ShellOutput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -52,14 +52,13 @@ HELP
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $shell = $this->getShell();
-        $shellOutput = $this->shellOutput($output);
 
         $buf = $shell->getCodeBuffer();
         if ($input->getOption('clear')) {
             $shell->resetCodeBuffer();
-            $shellOutput->writeln($this->formatLines($buf, 'urgent'), ShellOutputAdapter::NUMBER_LINES);
+            $output->writeln($this->formatLines($buf, 'urgent'), ShellOutput::NUMBER_LINES);
         } else {
-            $shellOutput->writeln($this->formatLines($buf), ShellOutputAdapter::NUMBER_LINES);
+            $output->writeln($this->formatLines($buf), ShellOutput::NUMBER_LINES);
         }
 
         return 0;

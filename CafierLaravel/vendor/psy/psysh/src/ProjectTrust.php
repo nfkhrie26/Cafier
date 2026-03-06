@@ -354,37 +354,8 @@ class ProjectTrust
             }
         }
 
-        if (($untrustedProjectRoot = $this->getUntrustedProjectRootHint()) !== null) {
-            return $this->normalizeProjectRoot($untrustedProjectRoot);
-        }
-
-        return null;
-    }
-
-    /**
-     * Only prompt about local PsySH binaries when a launcher detected one.
-     */
-    public function shouldPromptForLocalPsyshBinary(): bool
-    {
-        return $this->getUntrustedProjectRootHint() !== null;
-    }
-
-    /**
-     * Get untrusted project root hint from environment, if present.
-     */
-    private function getUntrustedProjectRootHint(): ?string
-    {
-        if (isset($_SERVER['PSYSH_UNTRUSTED_PROJECT'])
-            && \is_string($_SERVER['PSYSH_UNTRUSTED_PROJECT'])
-            && $_SERVER['PSYSH_UNTRUSTED_PROJECT'] !== ''
-        ) {
-            return $_SERVER['PSYSH_UNTRUSTED_PROJECT'];
-        }
-
-        $env = \getenv('PSYSH_UNTRUSTED_PROJECT');
-
-        if (\is_string($env) && $env !== '') {
-            return $env;
+        if (isset($_SERVER['PSYSH_UNTRUSTED_PROJECT']) && $_SERVER['PSYSH_UNTRUSTED_PROJECT']) {
+            return $this->normalizeProjectRoot($_SERVER['PSYSH_UNTRUSTED_PROJECT']);
         }
 
         return null;

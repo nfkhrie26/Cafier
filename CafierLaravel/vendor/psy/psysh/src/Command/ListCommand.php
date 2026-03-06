@@ -22,6 +22,7 @@ use Psy\Command\ListCommand\VariableEnumerator;
 use Psy\Exception\RuntimeException;
 use Psy\Input\CodeArgument;
 use Psy\Input\FilterOptions;
+use Psy\Output\ShellOutput;
 use Psy\VarDumper\Presenter;
 use Psy\VarDumper\PresenterAware;
 use Symfony\Component\Console\Formatter\OutputFormatter;
@@ -117,7 +118,6 @@ HELP
     {
         $this->validateInput($input);
         $this->initEnumerators();
-        $shellOutput = $this->shellOutput($output);
 
         $method = $input->getOption('long') ? 'writeLong' : 'write';
 
@@ -127,16 +127,17 @@ HELP
             $reflector = null;
         }
 
-        if ($input->getOption('long')) {
-            $shellOutput->startPaging();
+        // @todo something cleaner than this :-/
+        if ($output instanceof ShellOutput && $input->getOption('long')) {
+            $output->startPaging();
         }
 
         foreach ($this->enumerators as $enumerator) {
             $this->$method($output, $enumerator->enumerate($input, $reflector, $target));
         }
 
-        if ($input->getOption('long')) {
-            $shellOutput->stopPaging();
+        if ($output instanceof ShellOutput && $input->getOption('long')) {
+            $output->stopPaging();
         }
 
         // Set some magic local variables

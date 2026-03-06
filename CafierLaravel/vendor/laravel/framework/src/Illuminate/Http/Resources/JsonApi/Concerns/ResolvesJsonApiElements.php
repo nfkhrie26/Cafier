@@ -160,7 +160,7 @@ trait ResolvesJsonApiElements
     /**
      * Resolves `relationships` for the resource's data object.
      *
-     * @return array
+     * @return string|int
      *
      * @throws \RuntimeException
      */
@@ -324,7 +324,7 @@ trait ResolvesJsonApiElements
     public function resolveIncludedResourceObjects(JsonApiRequest $request): Collection
     {
         if (! $this->resource instanceof Model) {
-            return new Collection;
+            return [];
         }
 
         $this->compileResourceRelationships($request);

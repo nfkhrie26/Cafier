@@ -278,7 +278,6 @@ class Finder implements \IteratorAggregate
 
 	/**
 	 * Restricts the search by size. $operator accepts "[operator] [size] [unit]" example: >=10kB
-	 * @param  '>'|'>='|'<'|'<='|'='|'=='|'==='|'!='|'!=='|'<>'  $operator  or predicate string
 	 */
 	public function size(string $operator, ?int $size = null): static
 	{
@@ -299,7 +298,6 @@ class Finder implements \IteratorAggregate
 
 	/**
 	 * Restricts the search by modified time. $operator accepts "[operator] [date]" example: >1978-01-23
-	 * @param  '>'|'>='|'<'|'<='|'='|'=='|'==='|'!='|'!=='|'<>'  $operator  or predicate string
 	 */
 	public function date(string $operator, string|int|\DateTimeInterface|null $date = null): static
 	{

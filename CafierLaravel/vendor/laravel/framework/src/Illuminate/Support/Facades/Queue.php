@@ -68,7 +68,6 @@ use Illuminate\Support\Testing\Fakes\QueueFake;
  * @method static array pushedJobs()
  * @method static array rawPushes()
  * @method static \Illuminate\Support\Testing\Fakes\QueueFake serializeAndRestore(bool $serializeAndRestore = true)
- * @method static void releaseUniqueJobLocks()
  *
  * @see \Illuminate\Queue\QueueManager
  * @see \Illuminate\Queue\Queue
@@ -97,7 +96,7 @@ class Queue extends Facade
     public static function fake($jobsToFake = [])
     {
         $actualQueueManager = static::isFake()
-            ? tap(static::getFacadeRoot(), fn ($fake) => $fake->releaseUniqueJobLocks())->queue
+            ? static::getFacadeRoot()->queue
             : static::getFacadeRoot();
 
         return tap(new QueueFake(static::getFacadeApplication(), $jobsToFake, $actualQueueManager), function ($fake) {

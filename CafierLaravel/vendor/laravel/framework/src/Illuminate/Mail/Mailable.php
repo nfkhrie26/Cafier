@@ -250,12 +250,8 @@ class Mailable implements MailableContract, Renderable
 
         $queueName = property_exists($this, 'queue') ? $this->queue : null;
 
-        $job = $this->newQueuedJob();
-
-        $job->delay($delay);
-
         return $queue->connection($connection)->laterOn(
-            $queueName ?: null, $delay, $job
+            $queueName ?: null, $delay, $this->newQueuedJob()
         );
     }
 
@@ -268,6 +264,7 @@ class Mailable implements MailableContract, Renderable
     {
         $messageGroup = $this->messageGroup ?? (method_exists($this, 'messageGroup') ? $this->messageGroup() : null);
 
+        /** @phpstan-ignore callable.nonNativeMethod (false positive since method_exists guard is used) */
         $deduplicator = $this->deduplicator ?? (method_exists($this, 'deduplicationId') ? $this->deduplicationId(...) : null);
 
         return Container::getInstance()->make(SendQueuedMailable::class, ['mailable' => $this])
