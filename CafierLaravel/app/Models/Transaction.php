@@ -12,8 +12,7 @@ class Transaction extends Model
     protected $fillable = [
         'invoice_number', 'customer_id', 'barista_id', 'total_amount', 'status', 'items', 'payment_info'
     ];
-
-    // SKEPTIS ALERT: Ini kunci biar MongoDB paham kalo items itu bentuknya array/object, bukan string biasa.
+    
     protected $casts = [
         'total_amount' => 'float',
         'items' => 'array', 
