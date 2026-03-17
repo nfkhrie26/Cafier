@@ -1,14 +1,43 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import HeaderLogo from '../components/header-logo';
+import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import HeaderLogo from '../../components/header-logo';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
 export default function LoginScreen() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const router = useRouter();
 
   const webOutlineStyle = Platform.OS === 'web' ? { outlineStyle: 'none' } : {};
+
+
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post('http://192.168.1.24:8000/api/login', {
+        email: email,
+        password: password
+      });
+
+      // 1. Tangkep token dari balikan Laravel
+      const token = response.data.token;
+
+      // 2. Simpen token ke brankas hape (Secure Store)
+      await SecureStore.setItemAsync('userToken', token);
+
+      // 3. Kalo sukses, tendang user ke halaman utama (Tabs)
+      Alert.alert('Sukses', 'Berhasil Login, bro!');
+      router.replace('/(tabs)/checkout'); 
+
+    } catch (error: any) {
+      // Tangkep error dari Laravel (misal: password salah)
+      console.log(error.response?.data?.message)
+      Alert.alert('Gagal', error.response?.data?.message || 'Terjadi kesalahan');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -25,6 +54,7 @@ export default function LoginScreen() {
           <Text style={styles.label}>Username</Text>
           <TextInput 
             style={[styles.input, webOutlineStyle as any]} 
+            onChangeText={setEmail}
             placeholder="Username"
             placeholderTextColor="#A8926D" 
           />
@@ -35,6 +65,7 @@ export default function LoginScreen() {
           <View style={styles.passwordContainer}>
             <TextInput 
               style={[styles.passwordInput, webOutlineStyle as any]} 
+              onChangeText={setPassword}
               placeholder="**********"
               placeholderTextColor="#A8926D"
               secureTextEntry={!isPasswordVisible} 
@@ -55,7 +86,7 @@ export default function LoginScreen() {
 
         <TouchableOpacity 
             style={styles.loginButton}
-            onPress={() => alert('Logged In!')}
+            onPress={handleLogin}
         >
           <Text style={styles.loginButtonText}>Login</Text>
         </TouchableOpacity>

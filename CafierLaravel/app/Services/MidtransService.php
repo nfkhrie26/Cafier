@@ -15,6 +15,11 @@ class MidtransService
         Config::$isProduction = config('midtrans.is_production');
         Config::$isSanitized = true;
         Config::$is3ds = true;
+        Config::$curlOptions = [
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_SSL_VERIFYPEER => 0,
+            CURLOPT_HTTPHEADER => []
+        ];
     }
 
     public function createSnapToken(Transaction $transaction, $customer)
@@ -30,6 +35,10 @@ class MidtransService
                 'email' => $customer->email,
                 'phone' => $customer->phone,
             ],
+
+            'callbacks' => [
+            'finish' => 'https://cafier-app.com/payment-finish'
+        ]
             // Data items (keranjang) dari MongoDB lu bisa di-passing ke sini kalo mau
         ];
 

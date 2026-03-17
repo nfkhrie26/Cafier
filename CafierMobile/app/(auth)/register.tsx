@@ -1,19 +1,63 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Dimensions, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import HeaderLogo from '../components/header-logo';
+import { Dimensions, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import HeaderLogo from '../../components/header-logo';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
 const { height: screenHeight } = Dimensions.get('window');
 
 export default function RegisterScreen() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const webOutlineStyle = Platform.OS === 'web' ? { outlineStyle: 'none' } : {};
 
+  const handleRegister = async () => {
+    if (!name || !email || !password) {
+      Alert.alert('Eitss!', 'Semua field wajib diisi, jangan ada yang kosong');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post('http://192.168.1.24:8000/api/register', {
+        name,
+        email,
+        password,
+      });
+
+      const token = response.data.token;
+      
+      if (token) {
+          await SecureStore.setItemAsync('userToken', token);
+          Alert.alert('Mantap!', 'Akun Cafier lu udah jadi. Kuy pesen kopi!');
+          
+          router.replace('/(tabs)/checkout');
+          
+          // LANGSUNG KELUAR! Biar gak nge-trigger setLoading(false) di finally
+          return; 
+      }
+
+    } catch (error: any) {
+      // TAMBAHIN INI BRO! Biar kita liat muntahan error dari Laravel
+      console.log("ISI ERROR ASLI:", error.response?.data); 
+
+      const errorMsg = error.response?.data?.message || 'Gagal daftar';
+      Alert.alert('Waduh!', errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView 
@@ -30,9 +74,11 @@ export default function RegisterScreen() {
           <Text style={styles.welcomeTitle}>WELCOME !</Text>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Username</Text>
+            <Text 
+            style={styles.label}>Username</Text>
             <TextInput 
               style={[styles.input, webOutlineStyle as any]} 
+              onChangeText={setName}
               placeholder="Username"
               placeholderTextColor="#A8926D"
             />
@@ -41,7 +87,8 @@ export default function RegisterScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <TextInput 
-              style={[styles.input, webOutlineStyle as any]} 
+              style={[styles.input, webOutlineStyle as any]}
+              onChangeText={setEmail} 
               placeholder="example@gmail.com"
               placeholderTextColor="#A8926D"
               keyboardType="email-address"
@@ -53,6 +100,7 @@ export default function RegisterScreen() {
             <View style={styles.passwordContainer}>
               <TextInput 
                 style={[styles.passwordInput, webOutlineStyle as any]} 
+                onChangeText={setPassword}
                 placeholder="Password"
                 placeholderTextColor="#A8926D"
                 secureTextEntry={!isPasswordVisible} 
@@ -78,7 +126,9 @@ export default function RegisterScreen() {
 
           <TouchableOpacity 
             style={styles.registerButton}
-            onPress={() => alert('Account Created!')}
+            onPress={handleRegister}
+            disabled={loading} // Matiin tombol pas lagi proses
+            activeOpacity={0.7}
           >
             <Text style={styles.registerButtonText}>Create an account</Text>
           </TouchableOpacity>
@@ -90,7 +140,7 @@ export default function RegisterScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </ScrollView>
   );
 }
 

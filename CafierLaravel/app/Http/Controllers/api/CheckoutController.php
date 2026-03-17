@@ -30,6 +30,7 @@ class CheckoutController extends Controller
         $transaction = Transaction::create([
             'invoice_number' => 'TRX-' . time() . '-' . Str::random(5),
             'customer_id' => $user->id,
+            'barista_id' => '666',
             'total_amount' => $request->total_amount,
             'status' => 'pending',
             'items' => $request->items, // Array ini otomatis disimpen rapi di MongoDB
@@ -45,9 +46,12 @@ class CheckoutController extends Controller
                 'invoice_number' => $transaction->invoice_number,
                 'snap_token' => $snapToken
             ]);
-
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            // Biar lu tau persis Midtrans ngambek gara-gara apa
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Gagal dapet token: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

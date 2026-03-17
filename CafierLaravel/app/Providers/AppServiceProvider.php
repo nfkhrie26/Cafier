@@ -6,7 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
 
 // SKEPTIS ALERT: Ini yang bener! Pake model khusus Sanctum bawaan package MongoDB
-use MongoDB\Laravel\Sanctum\PersonalAccessToken; 
+use App\Models\PersonalAccessToken;
 
 class AppServiceProvider extends ServiceProvider
 {
