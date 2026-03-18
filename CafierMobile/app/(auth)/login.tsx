@@ -30,7 +30,7 @@ export default function LoginScreen() {
 
       // 3. Kalo sukses, tendang user ke halaman utama (Tabs)
       Alert.alert('Sukses', 'Berhasil Login, bro!');
-      router.replace('/(tabs)/checkout'); 
+      router.replace('/(tabs)/homepages'); 
 
     } catch (error: any) {
       // Tangkep error dari Laravel (misal: password salah)

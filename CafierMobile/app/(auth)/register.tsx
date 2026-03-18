@@ -39,7 +39,7 @@ export default function RegisterScreen() {
           await SecureStore.setItemAsync('userToken', token);
           Alert.alert('Mantap!', 'Akun Cafier lu udah jadi. Kuy pesen kopi!');
           
-          router.replace('/(tabs)/checkout');
+          router.replace('/(tabs)/homepages');
           
           // LANGSUNG KELUAR! Biar gak nge-trigger setLoading(false) di finally
           return; 

@@ -26,7 +26,6 @@ export default function checkout(){
     const tax = subtotal * 0.11;
     const grandTotal = subtotal + tax;
 
-    // Fungsi Format Rupiah
     const formatRp = (angka: number) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
     };
@@ -39,7 +38,6 @@ export default function checkout(){
             items: DUMMY_CART,
         };
 
-        // Tembak API lu (pake axios interceptor yang tadi kita bikin)
         const response = await api.post('/checkout', payload);
         
         // 3. TANGKEP TOKENNYA, TAMPILIN WEBVIEW-NYA
@@ -56,10 +54,7 @@ export default function checkout(){
 
     const onNavigationStateChange = (navState: any) => {
         const url = navState.url;
-        console.log("NGINTIP URL:", url);
-
-        // Kunci Rahasia: Kita tangkep kalo Midtrans nyoba lari ke URL bohongan lu
-        // Pastiin 'cafier-app.com' ini SAMA PERSIS kayak yang lu ketik di Dashboard Midtrans
+        console.log("URL:", url);
         if (url.includes('cafier-app.com')) { 
             
             // 1. APAPUN STATUSNYA, TUTUP DULU WEBVIEW-NYA!
@@ -81,28 +76,28 @@ export default function checkout(){
         }
     };
 
-    const handleLogout = async () => {
-    try {
-      // 1. Ambil token dulu buat dikasih ke Laravel (biar Laravel tau siapa yang mau logout)
-      const token = await SecureStore.getItemAsync('userToken');
+    // const handleLogout = async () => {
+    //     try {
+    //     // 1. Ambil token dulu buat dikasih ke Laravel (biar Laravel tau siapa yang mau logout)
+    //     const token = await SecureStore.getItemAsync('userToken');
 
-      // 2. Tembak API Logout
-      await axios.post('http://192.168.1.24:8000/api/logout', {}, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+    //     // 2. Tembak API Logout
+    //     await axios.post('http://192.168.1.24:8000/api/logout', {}, {
+    //         headers: {
+    //         Authorization: `Bearer ${token}`
+    //         }
+    //     });
 
-    } catch (error) {
-      console.log("Laravel udah hapus atau token kadaluarsa, lanjut hapus lokal aja.");
-    } finally {
-      // 3. APAPUN YANG TERJADI, hapus token di hape dan balik ke login
-      await SecureStore.deleteItemAsync('userToken');
-      
-      // 4. Tendang ke halaman login (pake replace biar gak bisa 'Back')
-      router.replace('/(auth)/login');
-    }
-  };
+    //     } catch (error) {
+    //     console.log("Laravel udah hapus atau token kadaluarsa, lanjut hapus lokal aja.");
+    //     } finally {
+    //     // 3. APAPUN YANG TERJADI, hapus token di hape dan balik ke login
+    //     await SecureStore.deleteItemAsync('userToken');
+        
+    //     // 4. Tendang ke halaman login (pake replace biar gak bisa 'Back')
+    //     router.replace('/(auth)/login');
+    //     }
+    // };
 
     return (
         <View style={{
@@ -114,14 +109,14 @@ export default function checkout(){
                 onPress={handleCheckout}
                 style={{ backgroundColor: "#4CAF50", padding: 12, borderRadius: 8 }}
                 >
-                <Text style={{ color: "white", textAlign: "center" }}>Klik</Text>
+                <Text style={{ color: "white", textAlign: "center" }}>Coba Checkout</Text>
             </Pressable>
-            <Pressable
+            {/* <Pressable
                 onPress={handleLogout}
                 style={{ backgroundColor: "#4CAF50", padding: 12, borderRadius: 8, margin: 50 }}
                 >
-                <Text style={{ color: "white", textAlign: "center" }}>Back</Text>
-            </Pressable>
+                <Text style={{ color: "white", textAlign: "center" }}>Logout</Text>
+            </Pressable> */}
             <Modal visible={showPayment} animationType="slide" transparent={false}>
                 <WebView
                 // Nembak ke server Sandbox Midtrans, tempelin snapToken di belakangnya
@@ -144,7 +139,7 @@ export default function checkout(){
                 style={{ padding: 15, backgroundColor: '#3E2A1D', alignItems: 'center' }} 
                 onPress={() => setShowPayment(false)}
                 >
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>Tutup & Batal Bayar</Text>
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Tutup</Text>
                 </TouchableOpacity>
             </Modal>
         </View>

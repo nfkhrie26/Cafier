@@ -2,17 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { styles } from './menu.styles';
+import { styles } from '../(style)/menu.styles';
 
 
-import CoffeeList from '../components/CoffeeList';
-import DessertList from '../components/DessertList';
-import NonCoffeeList from '../components/NonCoffeeList';
+import CoffeeList from '@/components/CoffeeList';
+import DessertList from '@/components/DessertList';
+import NonCoffeeList from '@/components/NonCoffeeList';
 
 const categories = [
-  { id: '1', name: 'COFFEE', img: require('../assets/images/latte.png') },
-  { id: '2', name: 'Non Coffee', img: require('../assets/images/Matcha.png') }, 
-  { id: '3', name: 'Desserts', img: require('../assets/images/mochi.png') },
+  { id: '1', name: 'COFFEE', img: require('../../assets/images/latte.png') },
+  { id: '2', name: 'Non Coffee', img: require('../../assets/images/Matcha.png') }, 
+  { id: '3', name: 'Desserts', img: require('../../assets/images/mochi.png') },
 ];
 
 export default function MenuScreen() {
@@ -89,12 +89,12 @@ export default function MenuScreen() {
       </View>
 
 
-      <View style={styles.bottomNav}>
+      {/* <View style={styles.bottomNav}>
         <TouchableOpacity onPress={() => router.push('/homepages')}><Ionicons name="home" size={30} color="#FFF" /></TouchableOpacity>
         <TouchableOpacity ><Ionicons name="search" size={30} color="#33241C" /></TouchableOpacity>
         <TouchableOpacity ><Ionicons name="cart" size={30} color="#FFF" /></TouchableOpacity>
         <TouchableOpacity><Ionicons name="person-circle-outline" size={30} color="#FFF" /></TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 }
