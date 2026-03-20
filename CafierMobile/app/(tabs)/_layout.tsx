@@ -2,7 +2,6 @@ import { Tabs } from "expo-router";
 import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,7 +23,7 @@ export default function TabLayout() {
         name="homepages"
         options={{
           title: 'homepages',
-          // Lu ubah ikonnya di sini!
+          // Lu ubah ikonnya di sini
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name="home" size={30} color="#33241C" />
           ),
@@ -34,7 +33,7 @@ export default function TabLayout() {
         name="menu"
         options={{
           title: 'menu',
-          // Lu ubah ikonnya di sini!
+          // Lu ubah ikonnya di sini
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name="search" size={30} color="#FFF" />
           ),
@@ -44,7 +43,7 @@ export default function TabLayout() {
         name="checkout"
         options={{
           title: 'checkout',
-          // Lu ubah ikonnya di sini!
+          // Lu ubah ikonnya di sini
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name="cart" size={30} color="#FFF" />
           ),
@@ -54,10 +53,18 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'profile',
-          // Lu ubah ikonnya di sini!
+          // Lu ubah ikonnya di sini
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name="person-circle-outline" size={30} color="#33241C" />
           ),
+        }}
+      />
+      
+      {/* tambahan ini buat nyembunyiin halaman rincian dari navbar bawah */}
+      <Tabs.Screen
+        name="rincian"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

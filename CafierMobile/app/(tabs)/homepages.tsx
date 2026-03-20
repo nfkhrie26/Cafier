@@ -1,5 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Stack, useRouter } from 'expo-router'; 
+import { Stack, useRouter } from 'expo-router';
 import React from 'react';
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from '../(style)/homepages.styles';
@@ -8,7 +7,7 @@ const productData = [
   { id: '1', name: 'Hot Latte', price: 'Rp. 32.000', img: require('../../assets/images/latte.png') }, 
   { id: '2', name: 'Americano', price: 'Rp. 25.000', img: require('../../assets/images/americano.png') },
   { id: '3', name: 'Matcha', price: 'Rp. 40.000', img: require('../../assets/images/Matcha.png') },
-  { id: '4', name: 'Choco', price: 'Rp. 40.000', img: require('../../assets/images/cokelat.png') },
+  { id: '4', name: 'Milk Choco', price: 'Rp. 40.000', img: require('../../assets/images/cokelat.png') },
   { id: '5', name: 'Mochi', price: 'Rp. 15.000', img: require('../../assets/images/mochi.png') },
   { id: '6', name: 'Choco pie', price: 'Rp. 40.000', img: require('../../assets/images/pie.png') },
 ];
