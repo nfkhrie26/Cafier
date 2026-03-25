@@ -3,10 +3,10 @@ import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const dataKopi = [
-  { id: 1, nama: 'Coffee Latte', deskripsi: 'Espresso with steamed milk and a layer of foam.', harga: 32000, gambar_url: require('../assets/images/latte.png'), imageKey: 'latte' },
-  { id: 2, nama: 'Americano', deskripsi: 'Espresso with water and ice cubes', harga: 25000, gambar_url: require('../assets/images/americano.png'), imageKey: 'americano' },
-  { id: 3, nama: 'Caramel Latte', deskripsi: 'Espresso with fresh milk, caramel syrup, and ice', harga: 38000, gambar_url: require('../assets/images/caramel.png'), imageKey: 'caramel' },
-  { id: 4, nama: 'Dalgona Coffee', deskripsi: 'Whipped coffee cream with fresh milk and ice', harga: 40000, gambar_url: require('../assets/images/Dalgona.png'), imageKey: 'dalgona' }, 
+  { id: 1, nama: 'Latte', deskripsi: 'Espresso with steamed milk and a layer of foam', harga: 32000, gambar_url: require('../assets/images/latte.png'), imageKey: 'latte' },
+  { id: 2, nama: 'Americano', deskripsi: 'Espresso with water', harga: 25000, gambar_url: require('../assets/images/americano.png'), imageKey: 'americano' },
+  { id: 3, nama: 'Caramel Latte', deskripsi: 'Espresso with fresh milk, caramel syrup', harga: 38000, gambar_url: require('../assets/images/caramel.png'), imageKey: 'caramel' },
+  { id: 4, nama: 'Dalgona Coffee', deskripsi: 'Whipped coffee cream with fresh milk', harga: 40000, gambar_url: require('../assets/images/Dalgona.png'), imageKey: 'dalgona' }, 
 ];
 
 const formatRupiah = (angka: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);

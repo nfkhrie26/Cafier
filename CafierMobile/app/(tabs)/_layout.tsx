@@ -95,6 +95,8 @@ export default function TabLayout() {
         <Tabs.Screen name="order-status" options={{ href: null }} />
         <Tabs.Screen name="order-history" options={{ href: null }} />
         <Tabs.Screen name="benefits" options={{ href: null }} />
+        <Tabs.Screen name="vouchers" options={{ href: null }} />
+
       </Tabs>
     </CartProvider>
   );

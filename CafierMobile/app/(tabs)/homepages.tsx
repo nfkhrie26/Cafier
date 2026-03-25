@@ -1,12 +1,12 @@
 import { Stack, useRouter } from 'expo-router';
 import React from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Text, TouchableOpacity, View, Platform, StatusBar } from 'react-native';
 import { styles } from '../(style)/homepages.styles';
 
 const productData = [
   { 
     id: '1', 
-    name: 'Hot Latte', 
+    name: 'Latte', 
     price: 'Rp. 32.000', 
     img: require('../../assets/images/latte.png'),
     imageKey: 'latte',
@@ -30,7 +30,7 @@ const productData = [
   },
   { 
     id: '4', 
-    name: 'Milk Choco', 
+    name: 'Choco', 
     price: 'Rp. 40.000', 
     img: require('../../assets/images/cokelat.png'),
     imageKey: 'cokelat',
@@ -46,7 +46,7 @@ const productData = [
   },
   { 
     id: '6', 
-    name: 'Choco pie', 
+    name: 'Pie', 
     price: 'Rp. 40.000', 
     img: require('../../assets/images/pie.png'),
     imageKey: 'pie',
@@ -61,20 +61,30 @@ export default function Homepages() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
+      {/* ========================================================= */}
+      {/* HEADER STUCK: Di-luar ScrollView biar nempel atas */}
+      {/* ========================================================= */}
+      <View style={[styles.header, { 
+        // Mantra biar coklatnya bablas mentok layar atas
+        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 15 : 50 
+      }]}>
+        <View>
+          <Text style={styles.greetingText}>Welcome Back Ada</Text>
+          <Text style={styles.emailText}>Adawong@gmail.com</Text>
+        </View>
+        <Image 
+          source={require('../../assets/images/adawong.jpg')} 
+          style={styles.profilePic} 
+        />
+      </View>
+
+      {/* ========================================================= */}
+      {/* SCROLLVIEW: Cuma bagian bawahnya aja yang digulung */}
+      {/* ========================================================= */}
       <ScrollView showsVerticalScrollIndicator={false}>
         
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greetingText}>Welcome Back Ada</Text>
-            <Text style={styles.emailText}>Adawong@gmail.com</Text>
-          </View>
-          <Image 
-            source={require('../../assets/images/adawong.jpg')} 
-            style={styles.profilePic} 
-          />
-        </View>
-
         <View style={styles.scrollContent}>
+          {/* LOGO */}
           <View style={[styles.logoContainer, { height: 100, justifyContent: 'center' }]}>
             <Image 
               source={require('../../assets/images/serene-logo-cokelat.png')} 
@@ -82,6 +92,7 @@ export default function Homepages() {
             />
           </View>
 
+          {/* PROMO CARD */}
           <View style={styles.promoCard}>
             <View>
               <Text style={styles.promoTitle}>Promotion</Text>
@@ -95,6 +106,7 @@ export default function Homepages() {
 
           <Text style={styles.sectionTitle}>Best seller</Text>
 
+          {/* GRID PRODUK */}
           <View style={styles.productGrid}>
             {productData.map((item) => (
               <TouchableOpacity 
@@ -108,7 +120,6 @@ export default function Homepages() {
                       price: item.price.replace(/\D/g, ''), 
                       imageKey: item.imageKey, 
                       desc: item.desc,
-                      // Ini penambahan parameter origin-nya
                       origin: '/homepages' 
                     }
                   });
@@ -121,6 +132,7 @@ export default function Homepages() {
             ))}
           </View>
 
+          {/* LOGO FOOTER */}
           <View style={[styles.logoContainer, { height: 100, justifyContent: 'center', marginTop: 10, marginBottom: 50 }]}>
             <Image 
               source={require('../../assets/images/serene-logo-cokelat.png')} 
@@ -128,8 +140,8 @@ export default function Homepages() {
             />
           </View>
         </View>
-      </ScrollView>
 
+      </ScrollView>
     </View>
   );
 }

@@ -3,9 +3,9 @@ import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const dataNonKopi = [
-  { id: 5, nama: 'Matcha Latte', deskripsi: 'Matcha powder with fresh milk and ice', harga: 40000, gambar_url: require('../assets/images/Matcha.png'), imageKey: 'matcha' },
-  { id: 6, nama: 'Milk Chocolate', deskripsi: 'Cocoa powder with fresh milk, ice, and whipped cream', harga: 40000, gambar_url: require('../assets/images/cokelat.png'), imageKey: 'cokelat' },
-  { id: 7, nama: 'Lemon Tea', deskripsi: 'Black tea with fresh lemon slices, sugar, and ice.', harga: 22000, gambar_url: require('../assets/images/lemon.png'), imageKey: 'lemon' },
+  { id: 5, nama: 'Matcha', deskripsi: 'Matcha powder with fresh milk ', harga: 40000, gambar_url: require('../assets/images/Matcha.png'), imageKey: 'matcha' },
+  { id: 6, nama: 'Choco', deskripsi: 'Cocoa powder with fresh milk,and whipped cream', harga: 40000, gambar_url: require('../assets/images/cokelat.png'), imageKey: 'cokelat' },
+  { id: 7, nama: 'Lemon Tea', deskripsi: 'Black tea with fresh lemon slices', harga: 22000, gambar_url: require('../assets/images/lemon.png'), imageKey: 'lemon' },
   { id: 8, nama: 'Strawberry Sprite', deskripsi: 'Sprite with strawberry syrup, fresh strawberries, and ice.', harga: 25000, gambar_url: require('../assets/images/strawberry_sprite.png'), imageKey: 'strawberry' }, 
 ];
 
