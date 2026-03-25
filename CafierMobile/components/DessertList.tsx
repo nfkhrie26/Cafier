@@ -41,7 +41,9 @@ export default function DessertList({ searchQuery = '' }: { searchQuery?: string
                 name: product.nama, 
                 price: product.harga, 
                 desc: product.deskripsi,
-                imageKey: product.imageKey 
+                imageKey: product.imageKey,
+                // Tambahan origin di sini
+                origin: '/menu' 
               }
             });
           }}
