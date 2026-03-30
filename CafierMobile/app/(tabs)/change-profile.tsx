@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, Platform, StatusBar } from "react-native";
-import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Stack, useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Alert, Image, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function ChangeProfileScreen() {
   const router = useRouter();
@@ -16,7 +16,22 @@ export default function ChangeProfileScreen() {
   // Fungsi dummy buat ganti foto
   const handleChangePhoto = () => {
     console.log("Tombol ganti foto dipencet!");
-    alert("Fitur buka galeri bakal jalan kalau udah install expo-image-picker bre!");
+    Alert.alert("Info", "Fitur buka galeri bakal jalan kalau udah install expo-image-picker bre!");
+  };
+
+  // Fungsi buat nyimpen data
+  const handleSaveProfile = () => {
+    // Di sini nanti lo bisa masukin logika buat nge-post data ke API/Backend
+    console.log("Data disimpan:", { username, email, password, dob });
+    
+    // Kasih feedback ke user kalau sukses
+    Alert.alert(
+      "Berhasil!", 
+      "Profil kamu berhasil diperbarui.",
+      [
+        { text: "OK", onPress: () => router.push('/profile') }
+      ]
+    );
   };
 
   return (
@@ -108,15 +123,20 @@ export default function ChangeProfileScreen() {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Joined membership since</Text>
           <TextInput 
-            style={[styles.input, { color: '#666' }]} 
+            style={[styles.input, { color: '#666', backgroundColor: '#E0D4C3' }]} // Dibikin agak gelap biar keliatan disable
             value={joined} 
             editable={false} 
           />
         </View>
 
-        {/* TOMBOL BACK TO PROFILE */}
-        <TouchableOpacity style={styles.saveBtn} onPress={() => router.push('/profile')} activeOpacity={0.8}>
-          <Text style={styles.saveBtnText}>Back to Profile</Text>
+        {/* TOMBOL SAVE PROFILE */}
+        <TouchableOpacity style={styles.saveBtn} onPress={handleSaveProfile} activeOpacity={0.8}>
+          <Text style={styles.saveBtnText}>Save Profile</Text>
+        </TouchableOpacity>
+
+        {/* TOMBOL CANCEL / BACK */}
+        <TouchableOpacity style={styles.cancelBtn} onPress={() => router.push('/profile')} activeOpacity={0.6}>
+          <Text style={styles.cancelBtnText}>Cancel</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -135,7 +155,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#422A1E",
     paddingHorizontal: 20,
     paddingBottom: 20,
-    // PADDING TOP NGITUNG OTOMATIS BIAR MENTOK LAYAR ATAS
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 50,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -197,8 +216,8 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     padding: 20,
-    flexGrow: 1, // KUNCI BIAR BISA DI-SCROLL
-    paddingBottom: 150, // PANCINGAN JARAK BAWAH
+    flexGrow: 1, 
+    paddingBottom: 150, 
   },
 
   /* FORM KONTEN */
@@ -223,7 +242,7 @@ const styles = StyleSheet.create({
     color: "#000",
   },
 
-  /* TOMBOL BACK */
+  /* TOMBOL SAVE */
   saveBtn: {
     backgroundColor: "#C7772F",
     borderRadius: 15,
@@ -234,6 +253,18 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: "#FFF",
     fontSize: 18,
+    fontWeight: "bold",
+  },
+
+  /* TOMBOL CANCEL */
+  cancelBtn: {
+    marginTop: 20,
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  cancelBtnText: {
+    color: "#5A3E2B",
+    fontSize: 16,
     fontWeight: "bold",
   },
 });

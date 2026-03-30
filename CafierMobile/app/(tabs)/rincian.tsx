@@ -1,11 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { styles } from '../(style)/rincian.styles';
-import { useCart } from '../../context/cart-context';
+import { CartItem, useCart } from '../../context/cart-context';
 
-// Pindahin formatRupiah ke luar biar efisien
 const formatRupiah = (number: number) => {
   return "Rp " + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
@@ -22,18 +21,21 @@ const IMAGES: Record<string, any> = {
   mochi: require('../../assets/images/mochi.png'),
   croissant: require('../../assets/images/croissant.png'),
   pie: require('../../assets/images/pie.png'),
-  redvelvet: require('../../assets/images/redvelvet.png'),
+  cake: require('../../assets/images/redvelvet.png'), 
 };
 
-const DESSERTS = ['mochi', 'croissant', 'pie', 'redvelvet'];
+const DESSERTS = ['mochi', 'croissant', 'pie', 'cake'];
 const COLD_ONLY = ['strawberry'];
 
-// DATA RASA DESSERT (Bisa lu ganti/tambahin sesuai menu Serene Cafe)
+const TEMP_OPTIONS = ['Hot', 'Cold'];
+const SIZE_OPTIONS = ['Small', 'Reguler', 'Large'];
+const SUGAR_OPTIONS = ['Normal', 'Less', 'No Sugar'];
+
 const DESSERT_FLAVORS: Record<string, string[]> = {
   mochi: ['Matcha', 'Vanilla', 'Strawberry'],
   croissant: ['Chocolate', 'Cheese', 'Plain'],
   pie: ['Apple', 'Chocolate', 'Berry'],
-  redvelvet: ['Cream Cheese', 'Original'],
+  cake: ['Chocolate Cake', 'Red Velvet Cake', 'Cheese Cake'],
 };
 
 const OptionButton = ({ label, state, setState }: { label: string, state: string, setState: any }) => (
@@ -41,7 +43,7 @@ const OptionButton = ({ label, state, setState }: { label: string, state: string
     style={[styles.optionBtn, state === label && styles.optionBtnActive]}
     onPress={() => setState(label)}
   >
-    <Text style={styles.optionText}>{label}</Text>
+    <Text style={[styles.optionText, state === label && { color: '#FFF' }]}>{label}</Text>
   </TouchableOpacity>
 );
 
@@ -50,41 +52,56 @@ export default function RincianScreen() {
   const router = useRouter();
   const { addToCart } = useCart();
 
-  // Deteksi item
-  const isDessert = DESSERTS.includes(String(imageKey));
-  const isColdOnly = COLD_ONLY.includes(String(imageKey));
+  const activeKey = String(imageKey) === 'redvelvet' ? 'cake' : String(imageKey);
+  
+  const isDessert = DESSERTS.includes(activeKey);
+  const isColdOnly = COLD_ONLY.includes(activeKey);
 
-  // Ambil daftar rasa buat dessert yang dipilih, kasih default 'Original' kalo gak ada
-  const availableFlavors = isDessert && DESSERT_FLAVORS[String(imageKey)] 
-    ? DESSERT_FLAVORS[String(imageKey)] 
+  const availableFlavors = isDessert && DESSERT_FLAVORS[activeKey] 
+    ? DESSERT_FLAVORS[activeKey] 
     : ['Original'];
 
-  // States
-  const [temperature, setTemperature] = useState('Hot');
-  const [size, setSize] = useState('Reguler');
-  const [sugar, setSugar] = useState('Normal');
-  const [flavor, setFlavor] = useState(availableFlavors[0]); // State baru buat Rasa
+  // --- DEFAULT STATE ---
+  const [temperature, setTemperature] = useState<string>(isColdOnly ? 'Cold' : 'Cold');
+  const [size, setSize] = useState<string>('Reguler');
+  const [sugar, setSugar] = useState<string>('Normal');
+  const [flavor, setFlavor] = useState<string>(availableFlavors[0]); 
   const [qty, setQty] = useState(1);
   const [notes, setNotes] = useState('');
 
   const itemName = name ? String(name) : 'Coffee Latte';
-  const itemPrice = useMemo(() => price ? Number(price) : 32000, [price]);
   const itemDesc = desc ? String(desc) : 'Espresso with steamed milk and a layer of foam.';
-  const itemImg = imageKey && IMAGES[String(imageKey)] ? IMAGES[String(imageKey)] : IMAGES['latte'];
+  const itemImg = IMAGES[activeKey] ? IMAGES[activeKey] : IMAGES['latte'];
+
+  // ==========================================================
+  // LOGIKA HARGA DINAMIS (Kecil -4000, Besar +4000)
+  // ==========================================================
+  const basePrice = useMemo(() => price ? Number(price) : 32000, [price]);
+  
+  const finalPrice = useMemo(() => {
+    let currentPrice = basePrice;
+    
+    // Harga cuma berubah ukurannya kalau yang dipesan BUKAN dessert
+    if (!isDessert) {
+      if (size === 'Small') currentPrice -= 4000;
+      if (size === 'Large') currentPrice += 4000;
+    }
+    
+    return currentPrice;
+  }, [basePrice, size, isDessert]);
 
   const handleAddToCart = () => {
-    const newItem = {
-      // ID dibikin unik dengan masukin flavor
-      id: `${imageKey}-${isDessert ? flavor : temperature}-${size}-${sugar}-${notes.substring(0, 10)}`,
+    const newItem: CartItem = {
+      id: `${activeKey}-${Date.now()}`, 
       name: itemName,
-      price: itemPrice,
+      price: finalPrice, // <--- FIX: Pastikan yang dikirim ke keranjang itu harga final yang udah disesuaikan
       qty: qty,
       image: itemImg,
       temp: isDessert ? undefined : temperature,
       size: isDessert ? undefined : size,
       sugar: isDessert ? undefined : sugar,
-      flavor: isDessert ? flavor : undefined, // Masukin rasa ke data cart
-      desc: isDessert ? `Flavor: ${flavor}` : undefined, // Ubah desc di cart biar nampilin rasa
+      flavor: isDessert ? flavor : undefined, 
+      desc: isDessert ? `Flavor: ${flavor}` : `${temperature}, ${size}, ${sugar}`,
       isDessert: isDessert,
       notes: notes
     };
@@ -100,7 +117,6 @@ export default function RincianScreen() {
 
   return (
     <View style={[styles.container, { flex: 1 }]}>
-      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -111,7 +127,6 @@ export default function RincianScreen() {
         <Text style={styles.headerTitle}>{itemName}</Text>
       </View>
 
-      {/* SCROLLVIEW */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={[styles.scrollContent, { flexGrow: 1, paddingBottom: 150 }]}
@@ -121,47 +136,47 @@ export default function RincianScreen() {
           <Image source={itemImg} style={styles.productImage} />
           <View style={styles.productDesc}>
             <Text style={styles.descText}>{itemDesc}</Text>
-            <Text style={styles.priceText}>{formatRupiah(itemPrice)}</Text>
+            {/* TAMPILAN HARGA YANG OTOMATIS BERUBAH */}
+            <Text style={styles.priceText}>{formatRupiah(finalPrice)}</Text>
           </View>
         </View>
 
-        {/* JIKA ITEM ADALAH DESSERT (Munculin Pilihan Rasa) */}
         {isDessert && (
           <>
             <Text style={styles.sectionTitle}>Flavor</Text>
             <View style={styles.row}>
-              {availableFlavors.map((flav) => (
-                <OptionButton key={flav} label={flav} state={flavor} setState={setFlavor} />
+              {availableFlavors.map((opt) => (
+                <OptionButton key={opt} label={opt} state={flavor} setState={setFlavor} />
               ))}
             </View>
           </>
         )}
 
-        {/* JIKA ITEM ADALAH KOPI/MINUMAN (Munculin Temp, Size, Sugar) */}
         {!isDessert && (
           <>
             {!isColdOnly && (
               <>
                 <Text style={styles.sectionTitle}>Temperature</Text>
                 <View style={styles.row}>
-                  <OptionButton label="Hot" state={temperature} setState={setTemperature} />
-                  <OptionButton label="Cold" state={temperature} setState={setTemperature} />
+                  {TEMP_OPTIONS.map((opt) => (
+                    <OptionButton key={opt} label={opt} state={temperature} setState={setTemperature} />
+                  ))}
                 </View>
               </>
             )}
 
             <Text style={styles.sectionTitle}>Size</Text>
             <View style={styles.row}>
-              <OptionButton label="Small" state={size} setState={setSize} />
-              <OptionButton label="Reguler" state={size} setState={setSize} />
-              <OptionButton label="Large" state={size} setState={setSize} />
+              {SIZE_OPTIONS.map((opt) => (
+                <OptionButton key={opt} label={opt} state={size} setState={setSize} />
+              ))}
             </View>
 
             <Text style={styles.sectionTitle}>Sugar Level</Text>
             <View style={styles.row}>
-              <OptionButton label="Normal" state={sugar} setState={setSugar} />
-              <OptionButton label="Less" state={sugar} setState={setSugar} />
-              <OptionButton label="No Sugar" state={sugar} setState={setSugar} />
+              {SUGAR_OPTIONS.map((opt) => (
+                <OptionButton key={opt} label={opt} state={sugar} setState={setSugar} />
+              ))}
             </View>
           </>
         )}
@@ -176,7 +191,6 @@ export default function RincianScreen() {
         />
       </ScrollView>
 
-      {/* BOTTOM ACTION */}
       <View style={[styles.bottomAction, { marginBottom: 90 }]}>
         <View style={styles.qtyContainer}>
           <TouchableOpacity onPress={() => setQty(Math.max(1, qty - 1))}>
@@ -189,7 +203,8 @@ export default function RincianScreen() {
         </View>
 
         <TouchableOpacity style={styles.addToCartBtn} onPress={handleAddToCart}>
-          <Text style={styles.addToCartText}>Add to Cart - {formatRupiah(itemPrice * qty)}</Text>
+          {/* HARGA TOMBOL ADD TO CART YANG JUGA IKUT BERUBAH * QTY */}
+          <Text style={styles.addToCartText}>Add to Cart - {formatRupiah(finalPrice * qty)}</Text>
         </TouchableOpacity>
       </View>
     </View>

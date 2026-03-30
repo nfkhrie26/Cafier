@@ -6,7 +6,7 @@ const dataDessert = [
   { id: 9, nama: 'Mochi', deskripsi: 'Glutinous rice flour with red bean or fruit filling', harga: 15000, gambar_url: require('../assets/images/mochi.png'), imageKey: 'mochi' },
   { id: 10, nama: 'Croissant', deskripsi: 'Wheat flour with butter and yeast', harga: 25000, gambar_url: require('../assets/images/croissant.png'), imageKey: 'croissant' }, 
   { id: 11, nama: 'Pie', deskripsi: 'Graham crust with whipped cream', harga: 22000, gambar_url: require('../assets/images/pie.png'), imageKey: 'pie' },
-  { id: 12, nama: 'Red Velvet Cake', deskripsi: 'Red cocoa sponge with cream cheese frosting', harga: 25000, gambar_url: require('../assets/images/redvelvet.png'), imageKey: 'redvelvet' }, 
+  { id: 12, nama: 'Cake', deskripsi: 'Our signature daily cake slices', harga: 25000, gambar_url: require('../assets/images/redvelvet.png'), imageKey: 'redvelvet' }, 
 ];
 
 const formatRupiah = (angka: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
@@ -42,7 +42,6 @@ export default function DessertList({ searchQuery = '' }: { searchQuery?: string
                 price: product.harga, 
                 desc: product.deskripsi,
                 imageKey: product.imageKey,
-                // Tambahan origin di sini
                 origin: '/menu' 
               }
             });

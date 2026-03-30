@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
+import { Voucher } from './voucher-context';
 
-// struktur data untuk item di keranjang
 export type CartItem = {
   id: string;
   name: string;
@@ -12,7 +12,8 @@ export type CartItem = {
   sugar?: string;
   desc?: string;
   isDessert?: boolean;
-  notes?: string; // Tambahan properti notes di sini
+  notes?: string;
+  flavor?: string;
 };
 
 type CartContextType = {
@@ -20,6 +21,11 @@ type CartContextType = {
   addToCart: (item: CartItem) => void;
   updateQty: (id: string, type: 'plus' | 'minus') => void;
   removeFromCart: (id: string) => void;
+  selectedVoucher: Voucher | null;
+  applyVoucher: (voucher: Voucher) => void;
+  removeVoucher: () => void;
+  subtotal: number;
+  discountAmount: number;
   totalPrice: number;
 };
 
@@ -27,18 +33,11 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
 
   const addToCart = (newItem: CartItem) => {
     setCartItems((prevItems) => {
-      const existingItemIndex = prevItems.findIndex(
-        (item) => 
-          item.id === newItem.id && 
-          item.temp === newItem.temp && 
-          item.size === newItem.size && 
-          item.sugar === newItem.sugar &&
-          item.notes === newItem.notes // Tambahan pengecekan notes biar ga kecampur
-      );
-
+      const existingItemIndex = prevItems.findIndex((item) => item.id === newItem.id);
       if (existingItemIndex >= 0) {
         const updatedItems = [...prevItems];
         updatedItems[existingItemIndex].qty += newItem.qty;
@@ -51,17 +50,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const updateQty = (id: string, type: 'plus' | 'minus') => {
     setCartItems((prevItems) => 
-      prevItems
-        .map((item) => {
-          if (item.id === id) {
-            // Calculate new quantity without Math.max restriction
-            const newQty = type === 'plus' ? item.qty + 1 : item.qty - 1;
-            return { ...item, qty: newQty };
-          }
-          return item;
-        })
-        // Immediately remove items that reach 0 or less
-        .filter((item) => item.qty > 0)
+      prevItems.map((item) => item.id === id ? { ...item, qty: type === 'plus' ? item.qty + 1 : item.qty - 1 } : item).filter((item) => item.qty > 0)
     );
   };
 
@@ -69,10 +58,36 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
   };
 
-  const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const applyVoucher = (voucher: Voucher) => setSelectedVoucher(voucher);
+  const removeVoucher = () => setSelectedVoucher(null);
+
+  // --- LOGIKA HITUNG HARGA DAN DISKON ---
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  
+  let discountAmount = 0;
+  
+  if (selectedVoucher) {
+    // FIX: Patokan pakai ID Voucher (Lebih aman!)
+    if (selectedVoucher.id === 2) {
+      // Weekly Rewards: Diskon 15% dari subtotal
+      discountAmount = subtotal * 0.15;
+    } 
+    else if (selectedVoucher.id === 1) {
+      // Monthly Rewards: Gratis Iced Americano (Misal dipotong Rp 32.000)
+      discountAmount = 32000; 
+      // Kalau subtotalnya di bawah 32rb, diskonnya maksimal seharga subtotal biar nggak minus
+      if (discountAmount > subtotal) discountAmount = subtotal;
+    }
+  }
+
+  const totalPrice = subtotal - discountAmount;
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, updateQty, removeFromCart, totalPrice }}>
+    <CartContext.Provider value={{ 
+      cartItems, addToCart, updateQty, removeFromCart, 
+      selectedVoucher, applyVoucher, removeVoucher,
+      subtotal, discountAmount, totalPrice 
+    }}>
       {children}
     </CartContext.Provider>
   );
@@ -80,8 +95,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error('useCart harus digunakan di dalam CartProvider');
-  }
+  if (context === undefined) throw new Error('useCart harus digunakan di dalam CartProvider');
   return context;
 }

@@ -42,7 +42,6 @@ export default function NonCoffeeList({ searchQuery = '' }: { searchQuery?: stri
                 price: product.harga, 
                 desc: product.deskripsi,
                 imageKey: product.imageKey,
-                // Ini tambahan originnya
                 origin: '/menu' 
               }
             });

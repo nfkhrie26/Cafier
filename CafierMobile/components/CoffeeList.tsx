@@ -42,7 +42,6 @@ export default function CoffeeList({ searchQuery = '' }: { searchQuery?: string 
                 price: product.harga, 
                 desc: product.deskripsi,
                 imageKey: product.imageKey,
-                // Ini tambahannya biar dia tahu asalnya dari menu
                 origin: '/menu'
               }
             });
