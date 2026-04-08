@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
-import HeaderLogo from '../../components/header-logo';
+import HeaderLogo from '@/components/header-logo';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import api from '@/service/utils';
 
 export default function LoginScreen() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -17,20 +18,35 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://192.168.1.24:8000/api/login', {
+      const response = await axios.post('https://trinity-milliary-mitzie.ngrok-free.dev/api/login', {
         email: email,
-        password: password
-      });
+        password: password,
+      },{
+  headers: {
+    'Accept': 'application/json',
+    'ngrok-skip-browser-warning': '69420' // Angka random buat ngelewatin filter Ngrok
+  }});
 
       // 1. Tangkep token dari balikan Laravel
       const token = response.data.token;
+      const role = response.data.role;
 
       // 2. Simpen token ke brankas hape (Secure Store)
       await SecureStore.setItemAsync('userToken', token);
+      await SecureStore.setItemAsync('userRole', role);
 
       // 3. Kalo sukses, tendang user ke halaman utama (Tabs)
-      Alert.alert('Sukses', 'Berhasil Login, bro!');
-      router.replace('/(tabs)/homepages'); 
+      if (role == 'customer'){
+        Alert.alert('Sukses', 'Berhasil Login, bro!');
+        router.replace('../(customer)/(tabs)/homepages'); 
+      } else if (role == 'barista'){
+        Alert.alert('Sukses', 'Berhasil Login, bro!');
+        router.replace('../(barista)/(tabs)/dashboard'); 
+      } else {
+        Alert.alert('Sukses', 'Berhasil Login, bro!');
+        router.replace('../(barista)/(tabs)/dashboard'); 
+      }
+      
 
     } catch (error: any) {
       // Tangkep error dari Laravel (misal: password salah)

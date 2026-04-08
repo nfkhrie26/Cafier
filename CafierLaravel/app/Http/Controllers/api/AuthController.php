@@ -21,7 +21,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password), // WAJIB HASH!
-            'role' => 'customer' // Default role buat daftar via hape
+            'role' => $request->role
         ]);
 
         // Bikin Karcis (Token)
@@ -54,7 +54,8 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'success',
             'user' => $user,
-            'token' => $token
+            'token' => $token,
+            'role' => $user->role
         ]);
     }
 

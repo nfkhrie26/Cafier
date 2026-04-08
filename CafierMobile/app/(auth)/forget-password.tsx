@@ -1,7 +1,7 @@
 import { Stack, useRouter } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import HeaderLogo from '../../components/header-logo';
+import HeaderLogo from '@/components/header-logo';
 
 export default function ForgetPasswordScreen() {
   const router = useRouter();

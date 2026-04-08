@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Dimensions, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
-import HeaderLogo from '../../components/header-logo';
+import HeaderLogo from '@/components/header-logo';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import api from '@/service/utils';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -15,6 +16,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const role = 'barista';
 
   const webOutlineStyle = Platform.OS === 'web' ? { outlineStyle: 'none' } : {};
 
@@ -27,10 +29,11 @@ export default function RegisterScreen() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://192.168.1.24:8000/api/register', {
+      const response = await axios.post('https://trinity-milliary-mitzie.ngrok-free.dev/api/register', {
         name,
         email,
         password,
+        role
       });
 
       const token = response.data.token;
@@ -39,7 +42,7 @@ export default function RegisterScreen() {
           await SecureStore.setItemAsync('userToken', token);
           Alert.alert('Mantap!', 'Akun Cafier lu udah jadi. Kuy pesen kopi!');
           
-          router.replace('/(tabs)/homepages');
+          router.replace('../(customer)/(tabs)/homepages');
           
           // LANGSUNG KELUAR! Biar gak nge-trigger setLoading(false) di finally
           return; 

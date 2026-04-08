@@ -10,7 +10,14 @@ class Transaction extends Model
     protected $collection = 'transactions';
 
     protected $fillable = [
-        'invoice_number', 'customer_id', 'barista_id', 'total_amount', 'status', 'items', 'payment_info'
+        'invoice_number', 
+        'customer_id', 
+        'barista_id', 
+        'total_amount',
+        'payment_type', 
+        'status', 
+        'items', 
+        'payment_info'
     ];
     
     protected $casts = [

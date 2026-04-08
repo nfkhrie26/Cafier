@@ -2,16 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { styles } from '../(style)/menu.styles';
+import { styles } from '../../(style)/menu.styles';
 
 import CoffeeList from '@/components/CoffeeList';
 import DessertList from '@/components/DessertList';
 import NonCoffeeList from '@/components/NonCoffeeList';
 
 const categories = [
-  { id: '1', name: 'Coffee', img: require('../../assets/images/latte.png') },
-  { id: '2', name: 'Non Coffee', img: require('../../assets/images/Matcha.png') }, 
-  { id: '3', name: 'Desserts', img: require('../../assets/images/mochi.png') },
+  { id: '1', name: 'Coffee', img: require('@/assets/images/latte.png') },
+  { id: '2', name: 'Non Coffee', img: require('@/assets/images/Matcha.png') }, 
+  { id: '3', name: 'Desserts', img: require('@/assets/images/mochi.png') },
 ];
 
 export default function MenuScreen() {

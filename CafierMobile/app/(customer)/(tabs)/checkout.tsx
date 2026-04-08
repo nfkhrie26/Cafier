@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import { ActivityIndicator, Alert, Image, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { styles } from '../(style)/checkout.styles';
-import { useCart } from '../../context/cart-context';
-import api from '../../service/utils';
+import { styles } from '@/app/(style)/checkout.styles';
+import { useCart } from '@/context/cart-context';
+import api from '@/service/utils';
 
 const formatRupiah = (number: number) => {
   return "Rp " + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -28,6 +28,7 @@ export default function CheckoutScreen() {
   const [loading, setLoading] = useState(false);
   const [snapToken, setSnapToken] = useState('');
   const [showPayment, setShowPayment] = useState(false);
+  const [invoiceNumber, setInvoiceNumber] = useState('');
 
   const tax = subtotal * 0.11;
   const grandTotal = subtotal + tax - discountAmount;
@@ -35,14 +36,20 @@ export default function CheckoutScreen() {
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
     setLoading(true);
+    
     try {
       const payload = {
         total_amount: grandTotal,
         items: cartItems, 
         voucher_id: selectedVoucher?.id
       };
+      
       const response = await api.post('/checkout', payload);
+      
+      // 🚨 SKEPTIS CHECK: Lu wajib nangkep invoice_number di sini!
+      setInvoiceNumber(response.data.invoice_number); 
       setSnapToken(response.data.snap_token);
+      
       setShowPayment(true); 
     } catch (error: any) {
       Alert.alert('Error', 'Gagal memproses checkout.');
@@ -51,16 +58,80 @@ export default function CheckoutScreen() {
     }
   };
 
-  const onNavigationStateChange = (navState: any) => {
-    const url = navState.url;
-    if (url.includes('cafier-app.com')) { 
-      setShowPayment(false);
-      if (url.includes('transaction_status=settlement') || url.includes('transaction_status=capture')) {
-        Alert.alert('Lunas', 'Pembayaran berhasil, pesanan sedang diproses.');
-        router.replace('/homepages'); 
-      }
+  // --- FUNGSI BARU: NANYA STATUS KE LARAVEL ---
+  const checkStatusKeLaravel = async () => {
+    if (!invoiceNumber) return; // Kalo ga ada invoice, stop!
+
+    setLoading(true); // Puterin loading biar user ga mencet macem-macem
+    try {
+        // Nembak endpoint checkStatus yang ada di CheckoutController Laravel lu
+        const response = await api.get(`/checkout/status/${invoiceNumber}`);
+        const statusAsli = response.data.status; 
+
+        // Alert dan Tendang user sesuai status DARI DATABASE, bukan dari URL!
+        if (statusAsli === 'lunas') {
+            Alert.alert('Lunas Bos! 🎉', 'Pembayaran berhasil, pesanan sedang diproses.');
+            // 🚨 Pake Absolute Path biar ga Page Not Found!
+            router.replace('../homepages'); 
+            
+        } else if (statusAsli === 'pending') {
+            Alert.alert('Menunggu Pembayaran ⏳', 'Silakan selesaikan pembayaran.');
+            router.replace('../homepages');
+            
+        } else {
+            Alert.alert('Batal/Gagal ❌', 'Pembayaran tidak berhasil.');
+        }
+    } catch (error) {
+        Alert.alert('Waduh', 'Gagal ngecek status ke server.');
+    } finally {
+        setLoading(false);
     }
   };
+
+  // --- TRIGGER WEBVIEW ---
+  const onNavigationStateChange = (navState: any) => {
+    const url = navState.url;
+    
+    // Kalau Midtrans udah redirect ke Finish URL kita
+    if (url.includes('cafier-app.com')) { 
+      setShowPayment(false); // 1. Langsung tutup modalnya
+      checkStatusKeLaravel(); // 2. Eksekusi fungsi nanya ke Laravel!
+    }
+  };
+
+  useEffect(() => {
+    let interval: any;
+
+    // Kalo modal lagi kebuka DAN invoice-nya udah ada
+    if (showPayment && invoiceNumber) {
+      
+      // Satpam ngecek ke server setiap 5 detik (5000 milidetik)
+      interval = setInterval(async () => {
+        try {
+          console.log("Satpam lagi ngecek status pesanan:", invoiceNumber);
+          const response = await api.get(`/checkout/status/${invoiceNumber}`);
+          
+          if (response.data.status === 'lunas') {
+            // 1. STOP PATROLI BIAR GAK BERATIN SERVER!
+            clearInterval(interval); 
+            
+            // 2. TUTUP MODAL OTOMATIS!
+            setShowPayment(false); 
+            
+            // 3. KASIH ALERT & TENDANG KE HOMEPAGE
+            Alert.alert('Lunas Bos! 🎉', 'Pembayaran otomatis terkonfirmasi!');
+            router.replace('../homepages');
+          }
+        } catch (error) {
+          console.log("Satpam gagal ngecek:", error);
+        }
+      }, 5000); 
+    }
+
+    // WAJIB ADA: Bersihin interval kalo modalnya keburu ditutup manual
+    return () => clearInterval(interval);
+
+  }, [showPayment, invoiceNumber]);
 
   return (
     <View style={styles.container}>
@@ -72,7 +143,7 @@ export default function CheckoutScreen() {
         <View style={styles.emptyStateContainer}>
           <Ionicons name="cart-outline" size={80} color="#C87A3F" />
           <Text style={styles.emptyStateTitle}>Belum ada pesanan</Text>
-          <TouchableOpacity style={styles.emptyStateBtn} onPress={() => router.push('/menu')}>
+          <TouchableOpacity style={styles.emptyStateBtn} onPress={() => router.push('../menu')}>
             <Text style={styles.emptyStateBtnText}>Lihat Menu</Text>
           </TouchableOpacity>
         </View>
@@ -119,7 +190,7 @@ export default function CheckoutScreen() {
           <Text style={styles.sectionTitle}>Voucher Diskon</Text>
           <TouchableOpacity 
             style={[styles.voucherRow, selectedVoucher && { borderColor: '#C87A3F', borderWidth: 1 }]} 
-            onPress={() => router.push('/vouchers')}
+            onPress={() => router.push('../vouchers')}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View style={[styles.voucherIconBg, selectedVoucher && { backgroundColor: '#F0E2D3' }]}>
@@ -199,8 +270,17 @@ export default function CheckoutScreen() {
           onNavigationStateChange={onNavigationStateChange}
           startInLoadingState={true}
         />
-        <TouchableOpacity style={{ padding: 20, backgroundColor: '#4A3525', alignItems: 'center' }} onPress={() => setShowPayment(false)}>
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>Kembali</Text>
+        
+        {/* Tombol ini cuma dipencet kalo user mau nyerah/batal bayar */}
+        <TouchableOpacity 
+          style={{ padding: 20, backgroundColor: '#8B0000', alignItems: 'center' }} 
+          onPress={() => {
+            setShowPayment(false);
+            Alert.alert('Ditutup', 'Jangan lupa selesaikan pembayaran lu ya!');
+            // Satpam patroli otomatis berhenti pas showPayment jadi false
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Tutup & Bayar Nanti</Text>
         </TouchableOpacity>
       </Modal>
     </View>
