@@ -20,3 +20,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/checkout', [Checkout::class,'process']);
     Route::get('/checkout/status/{invoiceNumber}', [Checkout::class, 'checkStatus']);
 });
+
+// Tambahin route ini untuk update profile
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [ApiAuth::class, 'logout']);
+    
+    // Tambahkan route ini untuk update profile
+    Route::put('/profile', [ApiAuth::class, 'updateProfile']);
+    
+    Route::post('/checkout', [Checkout::class,'process']);
+    Route::get('/checkout/status/{invoiceNumber}', [Checkout::class, 'checkStatus']);
+});
