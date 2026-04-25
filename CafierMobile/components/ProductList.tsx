@@ -25,18 +25,19 @@ export default function ProductList({ data = [], searchQuery = '' }: { data?: an
         
         let isTersedia = true;
         let pesanHabis = '';
+        console.log("CCTV DATA PRODUK:", product);
 
         if (product.stock !== undefined && product.stock !== null) {
             isTersedia = product.stock > 0;
             pesanHabis = 'Stok Habis';
         } else if (product.is_available !== undefined) {
-            // Logika Kopi: Cek true/false
             isTersedia = product.is_available === true;
             pesanHabis = 'Tidak Tersedia';
         }
 
         return (
           <TouchableOpacity 
+            // 1. Ganti key-nya jadi _id
             key={product._id} 
             style={[styles.productCard, !isTersedia && { opacity: 0.5 }]}
             disabled={!isTersedia} 
@@ -45,11 +46,12 @@ export default function ProductList({ data = [], searchQuery = '' }: { data?: an
               router.push({
                 pathname: '/rincian',
                 params: { 
-                  id: product._id,
+                  id: product.id, 
                   name: product.name, 
                   price: product.price, 
                   desc: product.description,
                   imageUrl: product.image,
+                  variants: JSON.stringify(product.variants || []),
                   origin: '/menu'
                 }
               });

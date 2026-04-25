@@ -1,22 +1,18 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Voucher } from './voucher-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect } from 'react';
 
-export type CartItem = {
+export interface CartItem {
+  cartItemId: string; 
   id: string;
   name: string;
-  category: string;
   price: number;
   qty: number;
-  image: any;
-  temp?: string;
-  size?: string;
-  sugar?: string;
-  desc?: string;
-  isDessert?: boolean;
-  notes?: string;
-  flavor?: string;
-};
-
+  image: string;
+  variantDetails: { title: string; name: string }[];
+  notes: string;
+}
 type CartContextType = {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
@@ -36,10 +32,42 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        const savedCart = await AsyncStorage.getItem('@cafier_cart');
+        if (savedCart) {
+          setCartItems(JSON.parse(savedCart));
+        }
+      } catch (error) {
+        console.error('❌ Gagal narik memori keranjang:', error);
+      } finally {
+        setIsLoaded(true); // Tandain kalo udah selesai mikir
+      }
+    };
+
+    loadCart();
+  }, []);
+
+  useEffect(() => {
+    const saveCart = async () => {
+      if (isLoaded) { // Pastiin jangan nyimpen array kosong sebelum data lama keload
+        try {
+          await AsyncStorage.setItem('@cafier_cart', JSON.stringify(cartItems));
+        } catch (error) {
+          console.error('❌ Gagal nyimpen keranjang:', error);
+        }
+      }
+    };
+
+    saveCart();
+  }, [cartItems, isLoaded]);
 
   const addToCart = (newItem: CartItem) => {
     setCartItems((prevItems) => {
-      const existingItemIndex = prevItems.findIndex((item) => item.id === newItem.id);
+      const existingItemIndex = prevItems.findIndex((item) => item.cartItemId === newItem.cartItemId);
       if (existingItemIndex >= 0) {
         const updatedItems = [...prevItems];
         updatedItems[existingItemIndex].qty += newItem.qty;

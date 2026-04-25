@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Image, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import { styles } from '../../(style)/menu.styles';
 import api from '@/service/utils';
 import ProductList from '@/components/ProductList';
+import { useFocusEffect } from 'expo-router';
 
 // const categories = [
 //   { id: '1', name: 'Coffee', img: require('@/assets/images/latte.png') },

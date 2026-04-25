@@ -70,9 +70,9 @@ export default function CheckoutScreen() {
         const statusAsli = response.data.status; 
 
         // Alert dan Tendang user sesuai status DARI DATABASE, bukan dari URL!
-        if (statusAsli === 'lunas') {
+        if (statusAsli === 'diproses') {
             Alert.alert('Lunas Bos! 🎉', 'Pembayaran berhasil, pesanan sedang diproses.');
-            clearCart;
+            clearCart();
             router.replace('../homepages'); 
             
         } else if (statusAsli === 'pending') {
@@ -112,12 +112,14 @@ export default function CheckoutScreen() {
           console.log("Satpam lagi ngecek status pesanan:", invoiceNumber);
           const response = await api.get(`/checkout/status/${invoiceNumber}`);
           
-          if (response.data.status === 'lunas') {
+          if (response.data.status === 'diproses') {
             // 1. STOP PATROLI BIAR GAK BERATIN SERVER!
             clearInterval(interval); 
             
             // 2. TUTUP MODAL OTOMATIS!
             setShowPayment(false); 
+
+            clearCart();
             
             // 3. KASIH ALERT & TENDANG KE HOMEPAGE
             Alert.alert('Lunas Bos! 🎉', 'Pembayaran otomatis terkonfirmasi!');
@@ -155,21 +157,21 @@ export default function CheckoutScreen() {
           {cartItems.map((item) => (
             <View key={item.id} style={styles.itemCard}>
               <View style={styles.imageContainer}>
-                <Image source={item.image} style={styles.itemImage} />
+                <Image source={{ uri: item.image }} style={styles.itemImage} />
               </View>
               <View style={styles.itemDetails}>
                 <Text style={styles.itemNameText}>{item.name}</Text>
                 
-                {/* FIX: Rincian spesifik dikembalikan ke bawah sini */}
-                {item.isDessert ? (
-                  <Text style={styles.detailText}>Flavor : {item.flavor}</Text>
-                ) : (
-                  <>
-                    <Text style={styles.detailText}>Temperature : {item.temp}</Text>
-                    <Text style={styles.detailText}>Size : {item.size}</Text>
-                    <Text style={styles.detailText}>Sugar : {item.sugar}</Text>
-                  </>
-                )}
+                {item.variantDetails && item.variantDetails.map((variant, index) => (
+                  <View key={index} style={{ flexDirection: 'row', marginTop: 2 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#555' }}>
+                      {variant.title}: 
+                    </Text>
+                    <Text style={{ fontSize: 12, color: '#777', marginLeft: 4 }}>
+                      {variant.name}
+                    </Text>
+                  </View>
+                ))}
                 {/* Tampilkan Notes kalau diisi */}
                 {item.notes ? <Text style={[styles.detailText, { fontStyle: 'italic', marginTop: 4 }]}>Notes : {item.notes}</Text> : null}
 

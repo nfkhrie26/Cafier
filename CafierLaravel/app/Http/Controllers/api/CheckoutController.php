@@ -37,6 +37,15 @@ class CheckoutController extends Controller
             'items' => $request->items, // Array ini otomatis disimpen rapi di MongoDB
         ]);
 
+        if (isset($request->items)) {
+            foreach ($request->items as $item) {
+                $produk = Product::find($item['id']);
+                if ($produk && !is_null($produk->stock)) {
+                    $produk->decrement('stock', $item['qty']);
+                }
+            }
+        }
+
         try {
             // 2. Suruh Service ngambil Snap Token
             $snapToken = $this->midtransService->createSnapToken($transaction, $user);
@@ -56,84 +65,72 @@ class CheckoutController extends Controller
         }
     }
     // Di CheckoutController.php
-    public function checkStatus($invoice_number)
-        {
-            // 1. Panggil SDK Midtrans
-            $statusMidtrans = \Midtrans\Transaction::status($invoice_number);
+   public function checkStatus($invoice_number)
+    {
+        $statusMidtrans = \Midtrans\Transaction::status($invoice_number);
+        $transaction = Transaction::where('invoice_number', $invoice_number)->first();
 
-            // 2. Cari transaksi di MongoDB
-            $transaction = Transaction::where('invoice_number', $invoice_number)->first();
-
-            // 3. Logic update (Sama kayak logic di Webhook lu)
-            if ($statusMidtrans->transaction_status == 'settlement' || $statusMidtrans->transaction_status == 'capture') {
-                $transaction->update(['status' => 'lunas']);
-            }
-
-            return response()->json([
-                'status' => $transaction->status,
-                'midtrans_raw' => $statusMidtrans
-            ]);
+        // 🚨 UDAH DIGANTI JADI DIPROSES
+        if ($statusMidtrans->transaction_status == 'settlement' || $statusMidtrans->transaction_status == 'capture') {
+            $transaction->update(['status' => 'diproses']);
         }
+
+        return response()->json([
+            'status' => $transaction->status,
+            'midtrans_raw' => $statusMidtrans
+        ]);
+    }
+
     public function webhook(Request $request)
     {
         try {
             $notif = new \Midtrans\Notification();
         } catch (\Exception $e) {
-            // Kalau gagal, catet di log dan tendang!
             return response()->json(['message' => 'Lu siapa jawa?'], 403);
         }
 
-        // 3. AMBIL DATA PENTING
         $transactionStatus = $notif->transaction_status;
         $paymentType = $notif->payment_type;
         $invoiceNumber = $notif->order_id;
         $fraudStatus = $notif->fraud_status;
 
-        // 4. CARI DATA DI MONGODB
         $transaction = Transaction::where('invoice_number', $invoiceNumber)->first();
 
-        // Kalo datanya gaib (gak ada di database)
         if (!$transaction) {
             return response()->json(['message' => 'Pesanan tidak ditemukan'], 404);
         }
 
-        if ($transaction->status === 'lunas') {
-            return response()->json(['message' => 'Udah lunas!']);
+        if ($transaction->status === 'diproses') {
+            return response()->json(['message' => 'Udah diproses bos!']);
         }
 
-        // 5. LOGIC PERUBAHAN STATUS
         if ($transactionStatus == 'capture') {
-            // Khusus Kartu Kredit
             if ($paymentType == 'credit_card') {
                 if ($fraudStatus == 'challenge') {
                     $transaction->update(['status' => 'pending']);
                 } else {
-                    $transaction->update(['status' => 'lunas']);
+                    $transaction->update(['status' => 'diproses']);
                 }
             }
         } 
         else if ($transactionStatus == 'settlement') {
-            // Ini lunas buat QRIS, VA, GoPay, dll
-            $transaction->update(['status' => 'lunas']);
+            $transaction->update(['status' => 'diproses']);
         } 
         else if ($transactionStatus == 'pending') {
             $transaction->update(['status' => 'pending']);
         } 
         else if ($transactionStatus == 'deny' || $transactionStatus == 'expire' || $transactionStatus == 'cancel') {
-            // Kalau gagal/kadaluarsa, status jadi batal
             $transaction->update(['status' => 'batal']);
 
             if (isset($transaction->items)) {
                 foreach ($transaction->items as $item) {
                     $produk = Product::find($item['id']);
-
                     if($produk && !is_null($produk->stock)){
-                        Product::where('_id', $item['id'])->increment('stock', $item['qty']);
-                    } else {}
+                        $produk->increment('stock', $item['qty']);
+                    }
+                }
             }
         }
 
-        // 6. KASIH OK KE MIDTRANS
         return response()->json(['message' => 'Laporan Webhook Sukses Diproses']);
-    }
-}}
+    }}

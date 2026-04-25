@@ -14,7 +14,6 @@ class Transaction extends Model
         'customer_id', 
         'barista_id', 
         'total_amount',
-        'payment_type', 
         'status', 
         'items', 
         'payment_info'

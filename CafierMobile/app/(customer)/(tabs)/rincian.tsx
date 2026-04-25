@@ -1,108 +1,113 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { styles } from '../../(style)/rincian.styles';
 import { CartItem, useCart } from '../../../context/cart-context';
+import { IMAGE_BASE_URL } from '@/service/utils'; 
 
 const formatRupiah = (number: number) => {
   return "Rp " + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
-const IMAGES: Record<string, any> = {
-  latte: require('@/assets/images/latte.png'),
-  americano: require('@/assets/images/americano.png'),
-  caramel: require('@/assets/images/caramel.png'),
-  dalgona: require('@/assets/images/Dalgona.png'),
-  matcha: require('@/assets/images/Matcha.png'),
-  cokelat: require('@/assets/images/cokelat.png'),
-  lemon: require('@/assets/images/lemon.png'),
-  strawberry: require('@/assets/images/strawberry_sprite.png'),
-  mochi: require('@/assets/images/mochi.png'),
-  croissant: require('@/assets/images/croissant.png'),
-  pie: require('@/assets/images/pie.png'),
-  redvelvet: require('@/assets/images/redvelvet.png'),
-};
-
-const DESSERTS = ['mochi', 'croissant', 'pie', 'cake'];
-const COLD_ONLY = ['strawberry'];
-
-const TEMP_OPTIONS = ['Hot', 'Cold'];
-const SIZE_OPTIONS = ['Small', 'Reguler', 'Large'];
-const SUGAR_OPTIONS = ['Normal', 'Less', 'No Sugar'];
-
-const DESSERT_FLAVORS: Record<string, string[]> = {
-  mochi: ['Matcha', 'Vanilla', 'Strawberry'],
-  croissant: ['Chocolate', 'Cheese', 'Plain'],
-  pie: ['Apple', 'Chocolate', 'Berry'],
-  cake: ['Chocolate Cake', 'Red Velvet Cake', 'Cheese Cake'],
-};
-
-const OptionButton = ({ label, state, setState }: { label: string, state: string, setState: any }) => (
+const OptionButton = ({ 
+  label, 
+  extraPrice, 
+  isSelected, 
+  onPress 
+}: { 
+  label: string, 
+  extraPrice: number, 
+  isSelected: boolean, 
+  onPress: () => void 
+}) => (
   <TouchableOpacity
-    style={[styles.optionBtn, state === label && styles.optionBtnActive]}
-    onPress={() => setState(label)}
+    style={[styles.optionBtn, isSelected && styles.optionBtnActive]}
+    onPress={onPress}
   >
-    <Text style={[styles.optionText, state === label && { color: '#FFF' }]}>{label}</Text>
+    <Text style={[styles.optionText, isSelected && { color: '#FFF' }]}>
+      {label} {extraPrice > 0 ? `(+${extraPrice / 1000}k)` : ''}
+    </Text>
   </TouchableOpacity>
 );
 
 export default function RincianScreen() {
-  const { id, name, price, desc, image, origin } = useLocalSearchParams();
+  const { id, name, price, desc, imageUrl, variants, origin } = useLocalSearchParams();
   const router = useRouter();
   const { addToCart } = useCart();
 
-  const activeKey = String(image) === 'redvelvet' ? 'cake' : String(image);
+  // 1. SIAPIN DATA MENTAH DARI PARAMS
+  const itemId = String(id);
+  const itemName = name ? String(name) : 'Menu Item';
+  const itemDesc = desc ? String(desc) : 'Deskripsi tidak tersedia.';
+  const itemImgUri = `${IMAGE_BASE_URL}${imageUrl}`;
+  const hargaAsli = useMemo(() => price ? Number(price) : 0, [price]);
   
-  const isDessert = DESSERTS.includes(activeKey);
-  const isColdOnly = COLD_ONLY.includes(activeKey);
+  // 🚨 BUKA BUNGKUSAN VARIANTS DARI ProductList
+  const parsedVariants = useMemo(() => {
+    try {
+      return variants ? JSON.parse(String(variants)) : [];
+    } catch (e) {
+      console.error("Gagal parse variants:", e);
+      return [];
+    }
+  }, [variants]);
 
-  const availableFlavors = isDessert && DESSERT_FLAVORS[activeKey] 
-    ? DESSERT_FLAVORS[activeKey] 
-    : ['Original'];
-
-  // --- DEFAULT STATE ---
-  const [temperature, setTemperature] = useState<string>(isColdOnly ? 'Cold' : 'Cold');
-  const [size, setSize] = useState<string>('Reguler');
-  const [sugar, setSugar] = useState<string>('Normal');
-  const [flavor, setFlavor] = useState<string>(availableFlavors[0]); 
+  // 2. STATE DINAMIS & CATATAN
+  const [selections, setSelections] = useState<Record<string, any>>({});
   const [qty, setQty] = useState(1);
   const [notes, setNotes] = useState('');
 
-  const itemName = name ? String(name) : 'Coffee Latte';
-  const itemDesc = desc ? String(desc) : 'Espresso with steamed milk and a layer of foam.';
-  const itemImg = IMAGES[activeKey] ? IMAGES[activeKey] : IMAGES['latte'];
-
-  // ==========================================================
-  // LOGIKA HARGA DINAMIS (Kecil -4000, Besar +4000)
-  // ==========================================================
-  const basePrice = useMemo(() => price ? Number(price) : 32000, [price]);
-  
-  const finalPrice = useMemo(() => {
-    let currentPrice = basePrice;
-    
-    // Harga cuma berubah ukurannya kalau yang dipesan BUKAN dessert
-    if (!isDessert) {
-      if (size === 'Small') currentPrice -= 4000;
-      if (size === 'Large') currentPrice += 4000;
+  // 🚨 BIKIN DEFAULT PILIHAN: Pas buka halaman, opsi pertama otomatis kepilih
+  useEffect(() => {
+    if (parsedVariants && parsedVariants.length > 0) {
+      const initialSelections: Record<string, any> = {};
+      parsedVariants.forEach((variants: any) => {
+        if (variants.options && variants.options.length > 0) {
+          initialSelections[variants.title] = variants.options[0];
+        }
+      });
+      setSelections(initialSelections);
     }
-    
-    return currentPrice;
-  }, [basePrice, size, isDessert]);
+  }, [parsedVariants]);
 
+  // Fungsi buat ngubah pilihan user
+  const handleSelectOption = (variantTitle: string, option: any) => {
+    setSelections(prev => ({
+      ...prev,
+      [variantTitle]: option 
+    }));
+  };
+
+  // 3. NGITUNG HARGA FINAL BERDASARKAN PILIHAN
+  const finalPrice = useMemo(() => {
+    let totalExtra = 0;
+    Object.values(selections).forEach((opt: any) => {
+      totalExtra += opt.extra_price || 0;
+    });
+    return hargaAsli + totalExtra;
+  }, [hargaAsli, selections]);
+
+  // 4. MASUKIN KE KERANJANG
   const handleAddToCart = () => {
+    // 1. Bikin teks gabungan varian (Misal: "Temperature: Ice, Size: Large")
+    const variantDetailsArray = Object.entries(selections).map(([title, opt]) => ({
+      title: title,
+      name: opt.name
+    }));
+    
+    const stringVarianUnik = variantDetailsArray.map(v => `${v.title}:${v.name}`).join('|');
+    const uniqueCartId = `${itemId}-${stringVarianUnik}-${notes}`;
+
+    // 3. Objek yang dikirim murni dinamis!
     const newItem: CartItem = {
-      id: `${activeKey}-${Date.now()}`, 
+      cartItemId: uniqueCartId, 
+      id: itemId,
       name: itemName,
-      price: finalPrice, // <--- FIX: Pastikan yang dikirim ke keranjang itu harga final yang udah disesuaikan
+      price: finalPrice, 
       qty: qty,
-      image: itemImg,
-      temp: isDessert ? undefined : temperature,
-      size: isDessert ? undefined : size,
-      sugar: isDessert ? undefined : sugar,
-      flavor: isDessert ? flavor : undefined, 
-      desc: isDessert ? `Flavor: ${flavor}` : `${temperature}, ${size}, ${sugar}`,
-      isDessert: isDessert,
+      image: itemImgUri, 
+      variantDetails: variantDetailsArray,
       notes: notes
     };
 
@@ -133,53 +138,32 @@ export default function RincianScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.productInfo}>
-          <Image source={itemImg} style={styles.productImage} />
+          <Image source={{ uri: itemImgUri }} style={styles.productImage} />
           <View style={styles.productDesc}>
             <Text style={styles.descText}>{itemDesc}</Text>
-            {/* TAMPILAN HARGA YANG OTOMATIS BERUBAH */}
             <Text style={styles.priceText}>{formatRupiah(finalPrice)}</Text>
           </View>
         </View>
 
-        {isDessert && (
-          <>
-            <Text style={styles.sectionTitle}>Flavor</Text>
+        {parsedVariants.map((variants: any, index: number) => (
+          <View key={index} style={{ marginBottom: 15 }}>
+            <Text style={styles.sectionTitle}>{variants.title}</Text>
             <View style={styles.row}>
-              {availableFlavors.map((opt) => (
-                <OptionButton key={opt} label={opt} state={flavor} setState={setFlavor} />
-              ))}
+              {variants.options.map((opt: any) => {
+                const isSelected = selections[variants.title]?.name === opt.name;
+                return (
+                  <OptionButton 
+                    key={opt.name} 
+                    label={opt.name} 
+                    extraPrice={opt.extra_price}
+                    isSelected={isSelected} 
+                    onPress={() => handleSelectOption(variants.title, opt)} 
+                  />
+                );
+              })}
             </View>
-          </>
-        )}
-
-        {!isDessert && (
-          <>
-            {!isColdOnly && (
-              <>
-                <Text style={styles.sectionTitle}>Temperature</Text>
-                <View style={styles.row}>
-                  {TEMP_OPTIONS.map((opt) => (
-                    <OptionButton key={opt} label={opt} state={temperature} setState={setTemperature} />
-                  ))}
-                </View>
-              </>
-            )}
-
-            <Text style={styles.sectionTitle}>Size</Text>
-            <View style={styles.row}>
-              {SIZE_OPTIONS.map((opt) => (
-                <OptionButton key={opt} label={opt} state={size} setState={setSize} />
-              ))}
-            </View>
-
-            <Text style={styles.sectionTitle}>Sugar Level</Text>
-            <View style={styles.row}>
-              {SUGAR_OPTIONS.map((opt) => (
-                <OptionButton key={opt} label={opt} state={sugar} setState={setSugar} />
-              ))}
-            </View>
-          </>
-        )}
+          </View>
+        ))}
 
         <Text style={styles.sectionTitle}>Order Instruction</Text>
         <TextInput
@@ -203,7 +187,6 @@ export default function RincianScreen() {
         </View>
 
         <TouchableOpacity style={styles.addToCartBtn} onPress={handleAddToCart}>
-          {/* HARGA TOMBOL ADD TO CART YANG JUGA IKUT BERUBAH * QTY */}
           <Text style={styles.addToCartText}>Add to Cart - {formatRupiah(finalPrice * qty)}</Text>
         </TouchableOpacity>
       </View>

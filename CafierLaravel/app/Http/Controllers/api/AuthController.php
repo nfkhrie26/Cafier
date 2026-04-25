@@ -68,5 +68,34 @@ class AuthController extends Controller
             'status' => 'success',
             'message' => 'Token berhasil dihapus, cabut!'
         ]);
-}
+    } // <-- INI YANG KURANG SEBELUMNYA
+
+    // API UPDATE PROFILE
+    public function updateProfile(Request $request)
+    {
+        $user = clone $request->user();
+
+        $request->validate([
+            'name' => 'required|string',
+            // Karena pakai MongoDB, gunakan _id sebagai rujukan primary key untuk pengecualian rule unique
+            'email' => 'required|email|unique:users,email,' . $user->_id . ',_id',
+            'password' => 'nullable|min:8',
+        ]);
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        // Jika user mengisi password baru, hash dan update. Jika kosong, biarkan password lama.
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profil berhasil diperbarui!',
+            'user' => $user
+        ]);
+    }
 }
