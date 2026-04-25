@@ -4,6 +4,7 @@ import { Voucher } from './voucher-context';
 export type CartItem = {
   id: string;
   name: string;
+  category: string;
   price: number;
   qty: number;
   image: any;
@@ -21,6 +22,7 @@ type CartContextType = {
   addToCart: (item: CartItem) => void;
   updateQty: (id: string, type: 'plus' | 'minus') => void;
   removeFromCart: (id: string) => void;
+  clearCart: () => void;
   selectedVoucher: Voucher | null;
   applyVoucher: (voucher: Voucher) => void;
   removeVoucher: () => void;
@@ -58,6 +60,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
   };
 
+  const clearCart = () => {
+    setCartItems([]);
+    setSelectedVoucher(null);
+  };
+
   const applyVoucher = (voucher: Voucher) => setSelectedVoucher(voucher);
   const removeVoucher = () => setSelectedVoucher(null);
 
@@ -84,9 +91,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <CartContext.Provider value={{ 
-      cartItems, addToCart, updateQty, removeFromCart, 
+      cartItems, addToCart, updateQty, removeFromCart, clearCart,
       selectedVoucher, applyVoucher, removeVoucher,
-      subtotal, discountAmount, totalPrice 
+      subtotal, discountAmount, totalPrice, 
     }}>
       {children}
     </CartContext.Provider>

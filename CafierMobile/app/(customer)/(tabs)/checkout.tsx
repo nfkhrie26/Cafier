@@ -21,7 +21,8 @@ export default function CheckoutScreen() {
     discountAmount, 
     totalPrice, 
     selectedVoucher, 
-    removeVoucher 
+    removeVoucher,
+    clearCart 
   } = useCart();
   
   const [paymentMethod, setPaymentMethod] = useState('qris');
@@ -46,12 +47,12 @@ export default function CheckoutScreen() {
       
       const response = await api.post('/checkout', payload);
       
-      // 🚨 SKEPTIS CHECK: Lu wajib nangkep invoice_number di sini!
       setInvoiceNumber(response.data.invoice_number); 
       setSnapToken(response.data.snap_token);
       
       setShowPayment(true); 
     } catch (error: any) {
+      console.log("salah", error.message)
       Alert.alert('Error', 'Gagal memproses checkout.');
     } finally {
       setLoading(false);
@@ -71,7 +72,7 @@ export default function CheckoutScreen() {
         // Alert dan Tendang user sesuai status DARI DATABASE, bukan dari URL!
         if (statusAsli === 'lunas') {
             Alert.alert('Lunas Bos! 🎉', 'Pembayaran berhasil, pesanan sedang diproses.');
-            // 🚨 Pake Absolute Path biar ga Page Not Found!
+            clearCart;
             router.replace('../homepages'); 
             
         } else if (statusAsli === 'pending') {

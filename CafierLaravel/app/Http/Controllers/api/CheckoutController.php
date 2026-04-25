@@ -123,16 +123,17 @@ class CheckoutController extends Controller
             // Kalau gagal/kadaluarsa, status jadi batal
             $transaction->update(['status' => 'batal']);
 
-            // Kalo user gak jadi bayar, stok yang udah di-booking harus dibalikin
-            // if (isset($transaction->items)) {
-            //     foreach ($transaction->items as $item) {
-            //         // Asumsi struktur MongoDB lu punya field 'product_id' dan 'qty'
-            //         Product::where('_id', $item['id'])->increment('stock', $item['qty']);
-            //     }
-            // }
+            if (isset($transaction->items)) {
+                foreach ($transaction->items as $item) {
+                    $produk = Product::find($item['id']);
+
+                    if($produk && !is_null($produk->stock)){
+                        Product::where('_id', $item['id'])->increment('stock', $item['qty']);
+                    } else {}
+            }
         }
 
         // 6. KASIH OK KE MIDTRANS
         return response()->json(['message' => 'Laporan Webhook Sukses Diproses']);
     }
-}
+}}

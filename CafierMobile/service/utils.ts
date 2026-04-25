@@ -2,6 +2,8 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 
+export const IMAGE_BASE_URL = 'https://trinity-milliary-mitzie.ngrok-free.dev/storage/';
+
 // 1. Bikin instance (kurir khusus buat Cafier)
 const api = axios.create({
   // SKEPTIS ALERT: Pastiin IP lu belom ganti ya!

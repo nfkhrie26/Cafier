@@ -15,15 +15,16 @@ class Product extends Model
         'description', 
         'price', 
         'is_available', 
+        'stock',       
         'image'
     ];
 
     protected $casts = [
-        'price' => 'float', // Biar urusan duit presisi
+        'price' => 'float', 
         'is_available' => 'boolean',
+        'stock' => 'integer',
     ];
     
-    // Contoh relasi Reference di MongoDB
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');

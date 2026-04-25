@@ -48,11 +48,11 @@ const OptionButton = ({ label, state, setState }: { label: string, state: string
 );
 
 export default function RincianScreen() {
-  const { name, price, desc, imageKey, origin } = useLocalSearchParams();
+  const { id, name, price, desc, image, origin } = useLocalSearchParams();
   const router = useRouter();
   const { addToCart } = useCart();
 
-  const activeKey = String(imageKey) === 'redvelvet' ? 'cake' : String(imageKey);
+  const activeKey = String(image) === 'redvelvet' ? 'cake' : String(image);
   
   const isDessert = DESSERTS.includes(activeKey);
   const isColdOnly = COLD_ONLY.includes(activeKey);

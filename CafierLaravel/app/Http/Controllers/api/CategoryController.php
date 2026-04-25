@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\api;
 
 use Illuminate\Http\Request;
 use App\Services\CategoryService;
+use App\Models\Product;
+use App\Models\Category;
 
 class CategoryController extends Controller
 {
@@ -16,7 +18,15 @@ class CategoryController extends Controller
 
     public function index()
     {
-        return response()->json($this->categoryService->getAll());
+        // Tarik semua data kategori dari MongoDB
+        $categories = Category::all();
+
+        // Balikin dalam bentuk JSON standar API
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil ngambil daftar kategori',
+            'data' => $categories
+        ]);
     }
 
     public function store(Request $request)

@@ -9,5 +9,8 @@ class Category extends Model
     protected $connection = 'mongodb';
     protected $collection = 'categories';
 
-    protected $fillable = ['name'];
+    protected $fillable = [
+        'nama',
+        'image'
+    ];
 }
