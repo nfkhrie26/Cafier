@@ -1,61 +1,67 @@
-import { Stack, useRouter } from 'expo-router';
-import React from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View, Platform, StatusBar } from 'react-native';
+import { Stack, useRouter, useFocusEffect } from 'expo-router';
+import React, { useState, useCallback } from 'react';
+import { Image, ScrollView, Text, View, Platform, StatusBar } from 'react-native';
 import { styles } from '../../(style)/homepages.styles';
-
-const productData = [
-  { 
-    id: '1', 
-    name: 'Latte', 
-    price: 'Rp. 32.000', 
-    img: require('@/assets/images/latte.png'),
-    imageKey: 'latte',
-    desc: 'Espresso with steamed milk and a layer of foam.'
-  }, 
-  { 
-    id: '2', 
-    name: 'Americano', 
-    price: 'Rp. 25.000', 
-    img: require('@/assets/images/americano.png'),
-    imageKey: 'americano',
-    desc: 'Classic espresso diluted with hot water.'
-  },
-  { 
-    id: '3', 
-    name: 'Matcha', 
-    price: 'Rp. 40.000', 
-    img: require('@/assets/images/Matcha.png'),
-    imageKey: 'matcha',
-    desc: 'Premium matcha green tea blended with milk.'
-  },
-  { 
-    id: '4', 
-    name: 'Choco', 
-    price: 'Rp. 40.000', 
-    img: require('@/assets/images/cokelat.png'),
-    imageKey: 'cokelat',
-    desc: 'Rich and creamy chocolate milk.'
-  },
-  { 
-    id: '5', 
-    name: 'Mochi', 
-    price: 'Rp. 15.000', 
-    img: require('@/assets/images/mochi.png'),
-    imageKey: 'mochi',
-    desc: 'Soft and chewy traditional sweet.'
-  },
-  { 
-    id: '6', 
-    name: 'Pie', 
-    price: 'Rp. 40.000', 
-    img: require('@/assets/images/pie.png'),
-    imageKey: 'pie',
-    desc: 'Crispy pie filled with melted chocolate.'
-  },
-];
+import api from '@/service/utils';
+import ProductList from '@/components/ProductList';
 
 export default function Homepages() {
   const router = useRouter(); 
+
+  // 1. 🚨 STATE HARUS DI DALEM SINI BRO!
+  const [dataHomepage, setDataHomepage] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const [bestSellerIds, setBestSellerIds] = useState<string[]>([]);
+  // 2. 🚨 PAKE useFocusEffect Biar auto-refresh pas balik dari halaman Checkout
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchSemuaMenu = async () => {
+        try {
+          const response = await api.get('/products');
+          const semuaMenu = response.data.data || response.data; 
+
+          if (semuaMenu && semuaMenu.length > 0) {
+            
+            // 🚨 CEK: Kalo ID-nya belom ada, berarti ini pertama kali buka aplikasi (Kocok Menu!)
+            if (bestSellerIds.length === 0) {
+              const shuffledMenu = semuaMenu.sort(() => 0.5 - Math.random());
+              const randomBestSellers = shuffledMenu.slice(0, 4);
+              
+              if (isActive) {
+                setDataHomepage(randomBestSellers);
+                // SIMPEN ID-NYA BIAR GAK LUPA!
+                setBestSellerIds(randomBestSellers.map((item: any) => item._id || item.id)); 
+              }
+            } 
+            
+            // 🚨 Kalo ID-nya UDAH ADA, jangan dikocok lagi! Cukup tarik data terbaru buat update stok.
+            else {
+              // Filter data terbaru dari API, cocokin sama ID yang udah kita simpen
+              const updatedBestSellers = semuaMenu.filter((item: any) => 
+                bestSellerIds.includes(item._id || item.id)
+              );
+
+              if (isActive) {
+                setDataHomepage(updatedBestSellers);
+              }
+            }
+
+          }
+        } catch (error: any) {
+          console.log("Gagal tarik menu homepage:", error.message);
+        }
+      }
+
+      fetchSemuaMenu();
+
+      return () => {
+        isActive = false;
+      };
+    }, [bestSellerIds]) // 🚨 Jangan lupa masukin bestSellerIds ke dalem array dependency ini
+  );
 
   return (
     <View style={styles.container}>
@@ -65,7 +71,6 @@ export default function Homepages() {
       {/* HEADER STUCK: Di-luar ScrollView biar nempel atas */}
       {/* ========================================================= */}
       <View style={[styles.header, { 
-        // Mantra biar coklatnya bablas mentok layar atas
         paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 15 : 50 
       }]}>
         <View>
@@ -82,7 +87,6 @@ export default function Homepages() {
       {/* SCROLLVIEW: Cuma bagian bawahnya aja yang digulung */}
       {/* ========================================================= */}
       <ScrollView showsVerticalScrollIndicator={false}>
-        
         <View style={styles.scrollContent}>
           {/* LOGO */}
           <View style={[styles.logoContainer, { height: 100, justifyContent: 'center' }]}>
@@ -105,32 +109,14 @@ export default function Homepages() {
           </View>
 
           <Text style={styles.sectionTitle}>Best seller</Text>
-
-          {/* GRID PRODUK */}
-          <View style={styles.productGrid}>
-            {productData.map((item) => (
-              <TouchableOpacity 
-                key={item.id} 
-                style={styles.productCard}
-                onPress={() => {
-                  router.push({
-                    pathname: '../rincian',
-                    params: {
-                      name: item.name,
-                      price: item.price.replace(/\D/g, ''), 
-                      imageKey: item.imageKey, 
-                      desc: item.desc,
-                      origin: '/homepages' 
-                    }
-                  });
-                }}
-              >
-                <Image source={item.img} style={styles.productImage} />
-                <Text style={styles.productName}>{item.name}</Text>
-                <Text style={styles.productPrice}>{item.price}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          
+          {/* 🚨 TAMPILIN DATA HASIL RANDOM */}
+          <ProductList 
+            data={dataHomepage} 
+            searchQuery={searchQuery} 
+            origin='/homepages' 
+            numColumns={2} // 🚨 SIHIRNYA DI SINI!
+          />
 
           {/* LOGO FOOTER */}
           <View style={[styles.logoContainer, { height: 100, justifyContent: 'center', marginTop: 10, marginBottom: 50 }]}>
@@ -140,7 +126,6 @@ export default function Homepages() {
             />
           </View>
         </View>
-
       </ScrollView>
     </View>
   );

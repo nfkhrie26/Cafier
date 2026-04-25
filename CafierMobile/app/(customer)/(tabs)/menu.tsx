@@ -7,6 +7,7 @@ import { styles } from '../../(style)/menu.styles';
 import api from '@/service/utils';
 import ProductList from '@/components/ProductList';
 import { useFocusEffect } from 'expo-router';
+import { IMAGE_BASE_URL } from '@/service/utils';
 
 // const categories = [
 //   { id: '1', name: 'Coffee', img: require('@/assets/images/latte.png') },
@@ -91,7 +92,7 @@ export default function MenuScreen() {
     if (activeCategory === 'Non Coffee') currentData = dataNonKopi;
     if (activeCategory === 'Desserts') currentData = dataDessert;
 
-    return <ProductList data={currentData} searchQuery={searchQuery} />;
+    return <ProductList data={currentData} searchQuery={searchQuery} origin='/menu' />;
   };
 
   const getHeaderTitle = () => {
@@ -143,7 +144,7 @@ export default function MenuScreen() {
                 setSearchQuery(''); 
               }}
             >
-              <Image source={{ uri: cat.image }} style={styles.categoryImage} />
+              <Image source={{ uri: `${IMAGE_BASE_URL}${cat.image}`}} style={styles.categoryImage} />
               <Text style={[styles.categoryText, activeCategory === cat.name && { color: '#574133' }]}>
                 {cat.name}
               </Text>
