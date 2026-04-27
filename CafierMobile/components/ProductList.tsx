@@ -1,27 +1,40 @@
-import { router } from 'expo-router';
-import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native';
-import { IMAGE_BASE_URL } from '@/service/utils';
+import { IMAGE_BASE_URL } from "@/service/utils";
+import { router } from "expo-router";
+import React from "react";
+import {
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
-const formatRupiah = (angka: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+const formatRupiah = (angka: number) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(angka);
 
 // 🚨 Tambah prop numColumns (default 1 buat list biasa)
-export default function ProductList({ 
-  data = [], 
-  searchQuery = '', 
-  origin = '',
-  numColumns = 1 
-}: { 
-  data?: any[], 
-  searchQuery?: string, 
-  origin?: string,
-  numColumns?: number 
+export default function ProductList({
+  data = [],
+  searchQuery = "",
+  origin = "",
+  numColumns = 1,
+}: {
+  data?: any[];
+  searchQuery?: string;
+  origin?: string;
+  numColumns?: number;
 }) {
-  
   const filteredData = data.filter((item) => {
-    return item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return (
+      item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
 
   if (filteredData.length === 0) {
@@ -37,39 +50,48 @@ export default function ProductList({
 
   return (
     <View style={[styles.container, isGrid && styles.gridWrapper]}>
-      {filteredData.map((product) => {
+      {/* FIX 1: Nambahin 'index' biar error key kuning hilang */}
+      {filteredData.map((product, index) => {
         let isTersedia = product.stock > 0 || product.is_available === true;
-        let pesanHabis = product.stock <= 0 ? 'Stok Habis' : 'Tidak Tersedia';
+        let pesanHabis = product.stock <= 0 ? "Stok Habis" : "Tidak Tersedia";
 
         return (
-          <TouchableOpacity 
-            key={product._id} 
+          <TouchableOpacity
+            // FIX 1: Update key pakai index sebagai cadangan
+            key={product._id || product.id || index.toString()}
             style={[
-              styles.productCard, 
+              styles.productCard,
               isGrid ? styles.gridCard : styles.listCard, // 🚨 Switch gaya di sini
-              !isTersedia && { opacity: 0.5 }
+              !isTersedia && { opacity: 0.5 },
             ]}
-            disabled={!isTersedia} 
+            disabled={!isTersedia}
             onPress={() => {
               router.push({
-                pathname: '/rincian',
-                params: { 
-                  id: product._id || product.id, 
-                  name: product.name, 
-                  price: product.price, 
+                pathname: "/rincian",
+                params: {
+                  id: product._id || product.id,
+                  name: product.name,
+                  price: product.price,
                   desc: product.description,
                   imageUrl: product.image,
                   variants: JSON.stringify(product.variants || []),
-                  origin: origin
-                }
+                  origin: origin,
+                },
               });
             }}
           >
             {/* BAGIAN GAMBAR */}
-            <View style={isGrid ? styles.imageWrapperGrid : styles.imageWrapperList}>
-              <Image 
-                source={{ uri: `${IMAGE_BASE_URL}${product.image}` }} 
-                style={isGrid ? styles.productImageGrid : styles.productImage} 
+            <View
+              style={isGrid ? styles.imageWrapperGrid : styles.imageWrapperList}
+            >
+              {/* FIX 2: Kasih gambar default/fallback kalau gambar dari API kosong atau error */}
+              <Image
+                source={
+                  product.image
+                    ? { uri: `${IMAGE_BASE_URL}${product.image}` }
+                    : require("@/assets/images/serene-logo.png")
+                }
+                style={isGrid ? styles.productImageGrid : styles.productImage}
               />
               {!isTersedia && (
                 <View style={styles.overlayHabis}>
@@ -77,32 +99,38 @@ export default function ProductList({
                 </View>
               )}
             </View>
-            
+
             {/* BAGIAN INFO */}
-<View style={[
-              styles.productInfo, 
-              // 🚨 Kalo dia mode Grid, ilangin margin kiri, kasih jarak atas, dan pusatin kontennya!
-              isGrid && { marginLeft: 0, marginTop: 8, alignItems: 'center' }
-            ]}>
-              <Text 
-                style={[styles.productName, isGrid && { textAlign: 'center' }]} 
+            <View
+              style={[
+                styles.productInfo,
+                // 🚨 Kalo dia mode Grid, ilangin margin kiri, kasih jarak atas, dan pusatin kontennya!
+                isGrid && { marginLeft: 0, marginTop: 8, alignItems: "center" },
+              ]}
+            >
+              <Text
+                style={[styles.productName, isGrid && { textAlign: "center" }]}
                 numberOfLines={1}
               >
                 {product.name}
               </Text>
-              
+
               {!isGrid && (
                 <Text style={styles.productDesc} numberOfLines={2}>
                   {product.description}
                 </Text>
               )}
-              
-              <Text style={[styles.productPrice, isGrid && { textAlign: 'center' }]}>
+
+              <Text
+                style={[styles.productPrice, isGrid && { textAlign: "center" }]}
+              >
                 {formatRupiah(product.price)}
               </Text>
-              
+
               {product.stock !== undefined && product.stock > 0 && (
-                <Text style={[styles.stockText, isGrid && { textAlign: 'center' }]}>
+                <Text
+                  style={[styles.stockText, isGrid && { textAlign: "center" }]}
+                >
                   Sisa: {product.stock}
                 </Text>
               )}
@@ -115,44 +143,47 @@ export default function ProductList({
 }
 
 const styles = StyleSheet.create({
-  container: { width: '100%' },
-  gridWrapper: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    justifyContent: 'space-between' 
+  container: { width: "100%" },
+  gridWrapper: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
-  productCard: { 
-    backgroundColor: '#F5EFE1', 
-    borderRadius: 15, 
-    padding: 12, 
-    marginBottom: 15 
+  productCard: {
+    backgroundColor: "#F5EFE1",
+    borderRadius: 15,
+    padding: 12,
+    marginBottom: 15,
   },
-  // 🚨 Style khusus List (1 Kolom)
-  listCard: { flexDirection: 'row', alignItems: 'center' },
-  // 🚨 Style khusus Grid (2 Kolom)
-  gridCard: { width: '48%', flexDirection: 'column' },
+  listCard: { flexDirection: "row", alignItems: "center" },
+  gridCard: { width: "48%", flexDirection: "column" },
 
   productImage: { width: 60, height: 60, borderRadius: 10 },
-  productImageGrid: { width: '100%', height: 120, borderRadius: 10 },
-  
+  productImageGrid: { width: "100%", height: 120, borderRadius: 10 },
+
   imageWrapperList: { width: 60, height: 60 },
-  imageWrapperGrid: { width: '100%', height: 120 },
+  imageWrapperGrid: { width: "100%", height: 120 },
 
   productInfo: { flex: 1, marginLeft: 10 },
-  productName: { fontSize: 14, fontWeight: 'bold', color: '#000' },
-  productDesc: { fontSize: 11, color: '#555', marginBottom: 6 },
-  productPrice: { fontSize: 14, fontWeight: 'bold', color: '#000' },
-  
-  notFoundContainer: { padding: 20, alignItems: 'center' },
-  notFoundText: { color: '#888' },
-  
+  productName: { fontSize: 14, fontWeight: "bold", color: "#000" },
+  productDesc: { fontSize: 11, color: "#555", marginBottom: 6 },
+  productPrice: { fontSize: 14, fontWeight: "bold", color: "#000" },
+
+  notFoundContainer: { padding: 20, alignItems: "center" },
+  notFoundText: { color: "#888" },
+
   overlayHabis: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  textHabis: { color: 'white', fontSize: 10, fontWeight: 'bold' },
-  stockText: { fontSize: 11, color: '#C87A3F', marginTop: 4, fontWeight: 'bold' }
+  textHabis: { color: "white", fontSize: 10, fontWeight: "bold" },
+  stockText: {
+    fontSize: 11,
+    color: "#C87A3F",
+    marginTop: 4,
+    fontWeight: "bold",
+  },
 });
