@@ -9,8 +9,9 @@ const api = axios.create({
   // SKEPTIS ALERT: Pastiin IP lu belom ganti ya!
   baseURL: 'https://posttetanic-latanya-unemanative.ngrok-free.dev/api', 
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "ngrok-skip-browser-warning": "69420", // Ditaruh sini biar otomatis dipake di semua request
   },
 });
 
@@ -18,7 +19,7 @@ const api = axios.create({
 // Sebelum data dikirim ke Laravel, selipin token di dalem jaket kurirnya
 api.interceptors.request.use(
   async (config) => {
-    const token = await SecureStore.getItemAsync('userToken');
+    const token = await SecureStore.getItemAsync("userToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,7 +27,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 3. RESPONSE INTERCEPTOR: Satpam Pintu Masuk Hape
@@ -38,14 +39,14 @@ api.interceptors.response.use(
   async (error) => {
     // Kalo token kadaluarsa atau gak valid (Error 401)
     if (error.response && error.response.status === 401) {
-      console.log('Token mati bro, auto-logout!');
+      console.log("Token mati bro, auto-logout!");
       // Hapus sisa token di brankas
-      await SecureStore.deleteItemAsync('userToken');
+      await SecureStore.deleteItemAsync("userToken");
       // Tendang balik ke halaman login
-      router.replace('/(auth)/login');
+      router.replace("/(auth)/login");
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

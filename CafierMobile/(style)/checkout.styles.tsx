@@ -4,7 +4,7 @@ export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EBE4D5' },
   header: { backgroundColor: '#4A3525', height: 90, justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 15 },
   headerTitle: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
-  scrollContent: { padding: 20, paddingBottom: 50 },
+  scrollContent: { padding: 20, paddingBottom: 100 },
   
   itemCard: { flexDirection: 'row', marginBottom: 20, alignItems: 'center' },
   imageContainer: { backgroundColor: '#F5EFE1', borderRadius: 15, padding: 15, alignItems: 'center', width: 120, height: 140, justifyContent: 'center' },

@@ -1,45 +1,44 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Platform, StatusBar } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Platform, StatusBar, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-
-// DATA DUMMY
-const MOCK_ORDERS = [
-  {
-    id: '124',
-    date: '12-10-2025',
-    time: '10:15',
-    status: 'Processed',
-    statusColor: '#FFCC00', // Kuning
-    items: [
-      { id: 1, name: 'Hot Latte', desc: 'Size : normal  Sugar : normal', qty: 1, img: require('@/assets/images/latte.png') },
-      { id: 2, name: 'Iced Matcha Latte', desc: 'Size : Large  Sugar : normal', qty: 1, img: require('@/assets/images/Matcha.png') },
-      { id: 3, name: 'Mochi', desc: 'Flovor : 2 Matcha, 1 Vanilla', qty: 1, img: require('@/assets/images/mochi.png') },
-    ]
-  },
-  {
-    id: '100',
-    date: '12-10-2025',
-    time: '10:15',
-    status: 'Completed',
-    statusColor: '#2ECC71', // Hijau
-    items: [
-      { id: 4, name: 'Hot Latte', desc: 'Size : normal  Sugar : normal', qty: 1, img: require('@/assets/images/latte.png') },
-      { id: 5, name: 'Iced Matcha Latte', desc: 'Size : Large  Sugar : normal', qty: 1, img: require('@/assets/images/Matcha.png') },
-      { id: 6, name: 'Mochi', desc: 'Flovor : 2 Matcha, 1 Vanilla', qty: 1, img: require('@/assets/images/mochi.png') },
-    ]
-  }
-];
+import { Ionicons } from '@expo/vector-icons';
+import api, { IMAGE_BASE_URL } from '@/service/utils';
 
 export default function OrderHistory() {
   const router = useRouter();
 
+  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const fetchHistory = async () => {
+    try {
+      const response = await api.get('/history');
+      const dataAsli = response.data.data || [];
+      setHistoryData(dataAsli);
+    } catch (error) {
+      console.error("Gagal load history:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    const s = status?.toLowerCase();
+    if (s === 'batal' || s === 'cancel') return '#E74C3C'; 
+    if (s === 'pending') return '#F39C12'; 
+    if (s === 'diproses' || s === 'processing') return '#3498DB'; 
+    if (s === 'lunas' || s === 'completed' || s === 'ready') return '#2ECC71'; 
+    return '#95A5A6'; 
+  };
+
   return (
-    // UDAH BUKAN SafeAreaView LAGI BIAR GAK ADA JARAK KOSONG DI ATAS
     <View style={styles.container}>
       
-      {/* ========================================================= */}
-      {/* HEADER STUCK: Ditaruh di luar ScrollView biar nempel di atas */}
-      {/* ========================================================= */}
+      {/* HEADER */}
       <View style={styles.header}>
         <View>
           <Text style={styles.welcomeText}>Welcome Back Ada</Text>
@@ -51,16 +50,11 @@ export default function OrderHistory() {
         />
       </View>
 
-      {/* ========================================================= */}
-      {/* SCROLLVIEW: Buat bagian konten di bawahnya */}
-      {/* ========================================================= */}
       <ScrollView 
         style={styles.scrollArea}
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
       >
-
-        {/* LOGO TENGAH */}
         <View style={[styles.logoContainer, { height: 100, justifyContent: 'center', marginTop: 10, marginBottom: 20 }]}>
           <Image 
             source={require('@/assets/images/serene-logo-cokelat.png')} 
@@ -68,37 +62,76 @@ export default function OrderHistory() {
           />
         </View>
 
-        {/* LOOPING KARTU PESANAN */}
-        {MOCK_ORDERS.map((order) => (
-          <View key={order.id} style={styles.orderCard}>
-            {/* Header Kartu */}
-            <View style={styles.orderCardHeader}>
-              <Text style={styles.orderNo}>Order No {order.id}</Text>
-              <Text style={styles.orderDate}>{order.date}{"\n"}{order.time}</Text>
-            </View>
-
-            <Text style={styles.orderLabel}>Order</Text>
-
-            {/* List Item dalam Kartu */}
-            {order.items.map((item) => (
-              <View key={item.id} style={styles.itemRow}>
-                <Image source={item.img} style={styles.itemImage} />
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemDesc}>{item.desc}</Text>
-                </View>
-                <Text style={styles.itemQty}>{item.qty}</Text>
-              </View>
-            ))}
-
-            {/* Status Badge */}
-            <View style={[styles.statusBadge, { backgroundColor: order.statusColor }]}>
-              <Text style={styles.statusText}>{order.status}</Text>
-            </View>
+        {loading ? (
+          <View style={{ alignItems: 'center', marginTop: 50 }}>
+             <ActivityIndicator size="large" color="#422A1E" />
+             <Text style={{ marginTop: 10, color: '#422A1E' }}>Memuat riwayat...</Text>
           </View>
-        ))}
+        ) : historyData.length === 0 ? (
+          <View style={{ alignItems: 'center', marginTop: 50 }}>
+            <Ionicons name="receipt-outline" size={60} color="#999" />
+            <Text style={{ marginTop: 10, color: '#666', fontSize: 16 }}>Belum ada riwayat pesanan.</Text>
+          </View>
+        ) : (
+          historyData.map((order: any) => {
+            const orderDate = order.created_at ? new Date(order.created_at).toLocaleDateString('id-ID') : '-';
+            const orderTime = order.created_at ? new Date(order.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-';
 
-        {/* TOMBOL BACK */}
+            return (
+              <View key={order._id || order.id} style={styles.orderCard}>
+                
+                <View style={styles.orderCardHeader}>
+                  <Text style={styles.orderNo} numberOfLines={1}>No {order.invoice_number || order.id}</Text>
+                  <Text style={styles.orderDate}>{orderDate}{"\n"}{orderTime}</Text>
+                </View>
+
+                <Text style={styles.orderLabel}>Order</Text>
+
+                {order.items && order.items.map((item: any, index: number) => {
+                  
+                  // 🚨 LOGIKA KEBAL ERROR
+                  let imagePath = item.product?.image || item.image;
+                  let finalImageUrl = '';
+
+                  // Cek dulu apakah imagePath itu ada DAN berupa string
+                  if (imagePath && typeof imagePath === 'string') {
+                    if (imagePath.startsWith('http')) {
+                      finalImageUrl = imagePath;
+                    } else {
+                      if (!imagePath.startsWith('/')) {
+                        imagePath = '/' + imagePath;
+                      }
+                      finalImageUrl = `${IMAGE_BASE_URL}${imagePath}`;
+                    }
+                  }
+
+                  return (
+                    <View key={index} style={styles.itemRow}>
+                      {finalImageUrl ? (
+                        <Image source={{ uri: finalImageUrl }} style={styles.itemImage} />
+                      ) : (
+                        <View style={[styles.itemImage, { backgroundColor: '#EEE', justifyContent: 'center', alignItems: 'center' }]}>
+                          <Ionicons name="image-outline" size={20} color="#999" />
+                        </View>
+                      )}
+                      
+                      <View style={styles.itemInfo}>
+                        <Text style={styles.itemName}>{item.product?.name || item.name}</Text>
+                        <Text style={styles.itemDesc}>{item.notes || 'Normal'}</Text>
+                      </View>
+                      <Text style={styles.itemQty}>{item.quantity || item.qty}</Text>
+                    </View>
+                  );
+                })}
+
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
+                  <Text style={styles.statusText}>{order.status?.toUpperCase() || 'UNKNOWN'}</Text>
+                </View>
+              </View>
+            );
+          })
+        )}
+
         <TouchableOpacity 
           style={styles.btnBack} 
           onPress={() => router.push('../profile')}
@@ -116,10 +149,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#E5D9C6',
-    // PADDING TOP DIHAPUS DARI SINI
   },
-  
-  /* --- STYLE HEADER STUCK --- */
   header: {
     backgroundColor: '#422A1E',
     flexDirection: 'row',
@@ -127,9 +157,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 25,
     paddingBottom: 20,
-    // PADDING TOP DIPINDAH KESINI BIAR MENTOK ATAS LAYAR
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 50,
-    zIndex: 10, // Biar selalu di depan pas di-scroll
+    zIndex: 10, 
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -139,24 +168,18 @@ const styles = StyleSheet.create({
   welcomeText: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
   emailText: { color: '#FFF', fontSize: 13, opacity: 0.8, marginTop: 2 },
   profileImage: { width: 45, height: 45, borderRadius: 25, borderWidth: 1, borderColor: '#FFF' },
-
-  /* --- STYLE SCROLLVIEW --- */
   scrollArea: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     paddingTop: 10,
-    paddingBottom: 150, // <-- NAH INI UDAH GW GEDEIN BIAR LEGA BRE
+    paddingBottom: 150, 
   },
-
-  /* LOGO TENGAH */
   logoContainer: { 
     alignItems: 'center', 
     justifyContent: 'center',
   },
-
-  /* KARTU PESANAN */
   orderCard: {
     backgroundColor: '#FFF9EF', 
     marginHorizontal: 20,
@@ -170,19 +193,15 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   orderCardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-  orderNo: { fontSize: 18, fontWeight: 'bold', color: '#33241C' },
-  orderDate: { fontSize: 12, color: '#888', textAlign: 'right' },
+  orderNo: { fontSize: 16, fontWeight: 'bold', color: '#33241C', flex: 1 },
+  orderDate: { fontSize: 12, color: '#888', textAlign: 'right', marginLeft: 10 },
   orderLabel: { fontSize: 18, fontWeight: 'bold', color: '#33241C', textAlign: 'center', marginVertical: 15 },
-  
-  /* ITEM DALAM PESANAN */
   itemRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
   itemImage: { width: 55, height: 55, borderRadius: 27.5 },
   itemInfo: { flex: 1, marginLeft: 12 },
   itemName: { fontSize: 15, fontWeight: 'bold', color: '#603813', marginBottom: 2 },
   itemDesc: { fontSize: 11, color: '#999' },
   itemQty: { fontSize: 18, fontWeight: 'bold', color: '#33241C', marginRight: 10 },
-  
-  /* STATUS BADGE */
   statusBadge: {
     marginTop: 15,
     paddingVertical: 12,
@@ -190,8 +209,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
-
-  /* TOMBOL BACK */
   btnBack: {
     backgroundColor: '#C97C3A',
     marginHorizontal: 30,

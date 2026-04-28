@@ -46,39 +46,41 @@ export default function CheckoutScreen() {
       };
       
       const response = await api.post('/checkout', payload);
-      
       setInvoiceNumber(response.data.invoice_number); 
       setSnapToken(response.data.snap_token);
-      
       setShowPayment(true); 
     } catch (error: any) {
-      console.log("salah", error.message)
+      console.log("Salah checkout:", error.message)
       Alert.alert('Error', 'Gagal memproses checkout.');
     } finally {
       setLoading(false);
     }
   };
 
-  // --- FUNGSI BARU: NANYA STATUS KE LARAVEL ---
+  // --- FUNGSI NANYA STATUS (SETELAH WEBVIEW DITUTUP) ---
   const checkStatusKeLaravel = async () => {
-    if (!invoiceNumber) return; // Kalo ga ada invoice, stop!
-
-    setLoading(true); // Puterin loading biar user ga mencet macem-macem
+    if (!invoiceNumber) return; 
+    setLoading(true); 
     try {
-        // Nembak endpoint checkStatus yang ada di CheckoutController Laravel lu
         const response = await api.get(`/checkout/status/${invoiceNumber}`);
-        const statusAsli = response.data.status; 
-
-        // Alert dan Tendang user sesuai status DARI DATABASE, bukan dari URL!
-        if (statusAsli === 'diproses') {
-            Alert.alert('Lunas Bos! 🎉', 'Pembayaran berhasil, pesanan sedang diproses.');
+        const dataRes = response.data;
+        
+        // Sesuai terminal kamu, statusnya "diproses" atau "lunas"
+        if (dataRes.status === 'lunas' || dataRes.status === 'diproses') {
+            Alert.alert('Lunas Bos! 🎉', 'Pembayaran berhasil dikonfirmasi.');
             clearCart();
-            router.replace('../homepages'); 
             
-        } else if (statusAsli === 'pending') {
+            // 🚨 Nangkep "id" sesuai yang dikirim Fakhrie di terminal tadi
+            const orderId = dataRes.id;
+            
+            router.replace({
+              pathname: '/order-status',
+              params: { id: orderId } 
+            });
+            
+        } else if (dataRes.status === 'pending') {
             Alert.alert('Menunggu Pembayaran ⏳', 'Silakan selesaikan pembayaran.');
             router.replace('../homepages');
-            
         } else {
             Alert.alert('Batal/Gagal ❌', 'Pembayaran tidak berhasil.');
         }
@@ -89,51 +91,46 @@ export default function CheckoutScreen() {
     }
   };
 
-  // --- TRIGGER WEBVIEW ---
   const onNavigationStateChange = (navState: any) => {
     const url = navState.url;
-    
-    // Kalau Midtrans udah redirect ke Finish URL kita
     if (url.includes('cafier-app.com')) { 
-      setShowPayment(false); // 1. Langsung tutup modalnya
-      checkStatusKeLaravel(); // 2. Eksekusi fungsi nanya ke Laravel!
+      setShowPayment(false); 
+      checkStatusKeLaravel(); 
     }
   };
 
+  // --- SATPAM PATROLI (POLLING SETIAP 5 DETIK) ---
   useEffect(() => {
     let interval: any;
 
-    // Kalo modal lagi kebuka DAN invoice-nya udah ada
     if (showPayment && invoiceNumber) {
-      
-      // Satpam ngecek ke server setiap 5 detik (5000 milidetik)
       interval = setInterval(async () => {
         try {
-          console.log("Satpam lagi ngecek status pesanan:", invoiceNumber);
           const response = await api.get(`/checkout/status/${invoiceNumber}`);
+          const dataRes = response.data;
           
-          if (response.data.status === 'diproses') {
-            // 1. STOP PATROLI BIAR GAK BERATIN SERVER!
+          if (dataRes.status === 'lunas' || dataRes.status === 'diproses') {
             clearInterval(interval); 
-            
-            // 2. TUTUP MODAL OTOMATIS!
             setShowPayment(false); 
-
             clearCart();
             
-            // 3. KASIH ALERT & TENDANG KE HOMEPAGE
+            // 🚨 Nangkep "id" (Tanpa garis bawah, sesuai respon Fakhrie)
+            const orderId = dataRes.id;
+
+            console.log("Satpam dapet ID:", orderId);
+
             Alert.alert('Lunas Bos! 🎉', 'Pembayaran otomatis terkonfirmasi!');
-            router.replace('../homepages');
+            router.replace({
+              pathname: '/order-status',
+              params: { id: orderId } 
+            });
           }
         } catch (error) {
           console.log("Satpam gagal ngecek:", error);
         }
       }, 5000); 
     }
-
-    // WAJIB ADA: Bersihin interval kalo modalnya keburu ditutup manual
     return () => clearInterval(interval);
-
   }, [showPayment, invoiceNumber]);
 
   return (
@@ -162,17 +159,13 @@ export default function CheckoutScreen() {
               <View style={styles.itemDetails}>
                 <Text style={styles.itemNameText}>{item.name}</Text>
                 
-                {item.variantDetails && item.variantDetails.map((variant, index) => (
+                {item.variantDetails && item.variantDetails.map((variant: any, index: number) => (
                   <View key={index} style={{ flexDirection: 'row', marginTop: 2 }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#555' }}>
-                      {variant.title}: 
-                    </Text>
-                    <Text style={{ fontSize: 12, color: '#777', marginLeft: 4 }}>
-                      {variant.name}
-                    </Text>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#555' }}>{variant.title}: </Text>
+                    <Text style={{ fontSize: 12, color: '#777', marginLeft: 4 }}>{variant.name}</Text>
                   </View>
                 ))}
-                {/* Tampilkan Notes kalau diisi */}
+                
                 {item.notes ? <Text style={[styles.detailText, { fontStyle: 'italic', marginTop: 4 }]}>Notes : {item.notes}</Text> : null}
 
                 <Text style={styles.itemPrice}>{formatRupiah(item.price * item.qty)}</Text>
@@ -204,9 +197,7 @@ export default function CheckoutScreen() {
                   {selectedVoucher ? '1 voucher berhasil dipakai' : 'Pakai voucher diskon'}
                 </Text>
                 {selectedVoucher && discountAmount > 0 && (
-                  <Text style={[styles.discountDetailText, { color: '#C87A3F' }]}>
-                    Dapat diskon {formatRupiah(discountAmount)} 🎉
-                  </Text>
+                  <Text style={[styles.discountDetailText, { color: '#C87A3F' }]}>Dapat diskon {formatRupiah(discountAmount)} 🎉</Text>
                 )}
               </View>
             </View>
@@ -238,7 +229,6 @@ export default function CheckoutScreen() {
               <Text style={styles.summaryLabel}>Subtotal</Text>
               <Text style={styles.summaryValue}>{formatRupiah(subtotal)}</Text>
             </View>
-            
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Pajak (11%)</Text>
               <Text style={styles.summaryValue}>{formatRupiah(tax)}</Text>
@@ -257,31 +247,22 @@ export default function CheckoutScreen() {
             </View>
           </View>
 
-          <TouchableOpacity 
-            style={styles.placeOrderBtn}
-            disabled={loading}
-            onPress={handleCheckout}
-          >
+          <TouchableOpacity style={styles.placeOrderBtn} disabled={loading} onPress={handleCheckout}>
             {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.placeOrderText}>Pesan Sekarang</Text>}
           </TouchableOpacity>
         </ScrollView>
       )}
 
+      {/* MODAL PEMBAYARAN MIDTRANS */}
       <Modal visible={showPayment} animationType="slide">
         <WebView
           source={{ uri: `https://app.sandbox.midtrans.com/snap/v2/vtweb/${snapToken}` }}
           onNavigationStateChange={onNavigationStateChange}
           startInLoadingState={true}
         />
-        
-        {/* Tombol ini cuma dipencet kalo user mau nyerah/batal bayar */}
         <TouchableOpacity 
           style={{ padding: 20, backgroundColor: '#8B0000', alignItems: 'center' }} 
-          onPress={() => {
-            setShowPayment(false);
-            Alert.alert('Ditutup', 'Jangan lupa selesaikan pembayaran lu ya!');
-            // Satpam patroli otomatis berhenti pas showPayment jadi false
-          }}
+          onPress={() => setShowPayment(false)}
         >
           <Text style={{ color: 'white', fontWeight: 'bold' }}>Tutup & Bayar Nanti</Text>
         </TouchableOpacity>
