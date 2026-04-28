@@ -1,11 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Stack, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Dimensions, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import HeaderLogo from '@/components/header-logo';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { Stack, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import api from '@/service/utils';
+import React, { useState } from 'react';
+import { Alert, Dimensions, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -172,7 +171,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     paddingHorizontal: 40,
     paddingTop: 40,
-    paddingBottom: 40,
+    paddingBottom: 150,
   },
   welcomeTitle: {
     fontSize: 28,

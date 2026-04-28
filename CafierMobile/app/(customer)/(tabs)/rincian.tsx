@@ -1,10 +1,10 @@
+import { IMAGE_BASE_URL } from '@/service/utils';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { styles } from '../../(style)/rincian.styles';
+import { styles } from '../../../(style)/rincian.styles';
 import { CartItem, useCart } from '../../../context/cart-context';
-import { IMAGE_BASE_URL } from '@/service/utils'; 
 
 const formatRupiah = (number: number) => {
   return "Rp " + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");

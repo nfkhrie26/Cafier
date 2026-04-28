@@ -3,10 +3,10 @@ import React from "react";
 import { Text, View } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
-import { Ionicons } from "@expo/vector-icons";
-import { styles } from '@/app/(style)/homepages.styles';
 import { CartProvider, useCart } from '@/context/cart-context';
 import { VoucherProvider } from '@/context/voucher-context';
+import { Ionicons } from "@expo/vector-icons";
+import { styles } from '../../../(style)/homepages.styles';
 
 function CartIconWithBadge({ color }: { color: string }) {
   const { cartItems } = useCart();

@@ -1,13 +1,10 @@
+import ProductList from '@/components/ProductList';
+import api, { IMAGE_BASE_URL } from '@/service/utils';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import React, { useState, useEffect, useCallback } from 'react';
-import { Image, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import axios from 'axios';
-import { styles } from '../../(style)/menu.styles';
-import api from '@/service/utils';
-import ProductList from '@/components/ProductList';
-import { useFocusEffect } from 'expo-router';
-import { IMAGE_BASE_URL } from '@/service/utils';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { styles } from '../../../(style)/menu.styles';
 
 // const categories = [
 //   { id: '1', name: 'Coffee', img: require('@/assets/images/latte.png') },

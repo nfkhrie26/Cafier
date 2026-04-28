@@ -1,11 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState, useEffect} from 'react';
-import { ActivityIndicator, Alert, Image, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { styles } from '@/app/(style)/checkout.styles';
+import { styles } from '@/(style)/checkout.styles';
 import { useCart } from '@/context/cart-context';
 import api from '@/service/utils';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Image, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 const formatRupiah = (number: number) => {
   return "Rp " + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");

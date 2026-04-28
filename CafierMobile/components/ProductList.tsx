@@ -43,7 +43,7 @@ export default function ProductList({
 
         return (
           <TouchableOpacity 
-            key={product._id} 
+            key={product._id || product.id} 
             style={[
               styles.productCard, 
               isGrid ? styles.gridCard : styles.listCard, // 🚨 Switch gaya di sini

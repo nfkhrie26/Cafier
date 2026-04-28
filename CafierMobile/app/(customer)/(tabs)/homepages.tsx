@@ -1,9 +1,9 @@
-import { Stack, useRouter, useFocusEffect } from 'expo-router';
-import React, { useState, useCallback } from 'react';
-import { Image, ScrollView, Text, View, Platform, StatusBar } from 'react-native';
-import { styles } from '../../(style)/homepages.styles';
-import api from '@/service/utils';
 import ProductList from '@/components/ProductList';
+import api from '@/service/utils';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { Image, Platform, ScrollView, StatusBar, Text, View } from 'react-native';
+import { styles } from '../../../(style)/homepages.styles';
 
 export default function Homepages() {
   const router = useRouter(); 
