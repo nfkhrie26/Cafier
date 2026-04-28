@@ -77,6 +77,7 @@ class CheckoutController extends Controller
 
         return response()->json([
             'status' => $transaction->status,
+            'id' => $transaction->_id,
             'midtrans_raw' => $statusMidtrans
         ]);
     }

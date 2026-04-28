@@ -26,5 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     
     // 2. Tambahin route API history di sini:
-    Route::get('/history', [OrderController::class, 'history']);
+    Route::get('/history', [OrderController::class, 'history']); 
+    // 🚨 3. TAMBAHIN INI KHRIE! BUAT NAMPILIN DETAIL ORDER DI FE:
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
 });

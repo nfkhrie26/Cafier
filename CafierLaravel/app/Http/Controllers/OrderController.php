@@ -48,10 +48,25 @@ class OrderController extends Controller
         return response()->json($order);
     }
 
-    // Fungsi bawaan lu buat nampilin detail 1 order
+    /// Fungsi baru buat nampilin detail 1 order (Support MongoDB _id)
     public function show($id)
     {
-        return response()->json($this->orderService->find($id));
+        // 🚨 Cari langsung ke tabel transactions pake _id
+        $transaction = Transaction::where('_id', $id)->first();
+
+        // Kalau datanya beneran ga ada
+        if (!$transaction) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak ditemukan'
+            ], 404);
+        }
+
+        // 🚨 Balikin pake format 'data' biar dibaca sama React Native lu
+        return response()->json([
+            'success' => true,
+            'data' => $transaction
+        ]);
     }
 
     // Fungsi bawaan lu buat ngehapus order
