@@ -8,14 +8,45 @@ export default function VouchersScreen() {
   const router = useRouter();
   
   const { claimedVouchers } = useVouchers(); 
-  const { applyVoucher, selectedVoucher } = useCart(); 
+  // 🚨 FIX: Ambil juga fungsi addToCart (atau addItem) dari useCart kamu
+  const { applyVoucher, selectedVoucher, addToCart } = useCart(); 
 
   const availableToUse = claimedVouchers.filter(v => v.id !== selectedVoucher?.id);
 
   const handleUseVoucher = (voucher: Voucher) => {
     applyVoucher(voucher); 
     
-    // FIX: Paksa langsung ke halaman checkout, jangan pakai back()
+    // 🚨 LOGIKA BARU: Cek kalau vouchernya ngasih Ice Americano gratis
+    const titleLowerCase = voucher.title.toLowerCase();
+    const descLowerCase = voucher.desc.toLowerCase();
+    
+    if (titleLowerCase.includes('monthly') || descLowerCase.includes('americano')) {
+      
+      // Bikin objek minuman gratisnya
+      const freeAmericano = {
+        id: 'free-americano-001', // Kasih ID khusus biar gak bentrok sama menu biasa
+        cartItemId: Date.now().toString(), // 🚨 FIX ERROR TS: Kasih ID unik buat di keranjang
+        name: 'Ice Americano',
+        price: 0, // Karena gratis!
+        qty: 1,
+        quantity: 1, 
+        notes: 'Regular - Free Monthly Voucher',
+        // Opsional: Kalau di cart nampilin gambar, kasih URL atau default icon
+        image: 'https://cdn-icons-png.flaticon.com/512/3054/3054889.png', 
+        product: {
+            name: 'Ice Americano'
+        },
+        variantDetails: [], // 🚨 FIX ERROR TS: Array kosong karena ini minuman default gratis
+      };
+
+      // 🚨 Panggil fungsi penambah keranjang
+      // Catatan: Kalau di cart-context kamu namanya 'addItem', ganti addToCart jadi addItem ya!
+      if (addToCart) {
+          addToCart(freeAmericano as any); // Tambahan 'as any' buat jaga-jaga kalau tipe datanya masih rewel
+      }
+    }
+    
+    // Paksa langsung ke halaman checkout
     router.push('../checkout');
   };
 
@@ -57,7 +88,6 @@ export default function VouchersScreen() {
           </View>
         )}
 
-        {/* FIX: Paksa langsung ke halaman checkout juga buat tombol Back */}
         <TouchableOpacity style={styles.backBtn} onPress={() => router.push('../checkout')}>
           <Text style={styles.backBtnText}>Back</Text>
         </TouchableOpacity>

@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Voucher } from './voucher-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect } from 'react';
 
 export interface CartItem {
   cartItemId: string; 
@@ -65,6 +64,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     saveCart();
   }, [cartItems, isLoaded]);
 
+  // 🚨 SATPAM VOUCHER (PENYAPU OTOMATIS) 🚨
+  // Jalan setiap kali keranjang di-load ATAU voucher diganti/dihapus
+  useEffect(() => {
+    if (isLoaded) {
+      // Kalau GA ADA voucher yg dipilih, ATAU vouchernya BUKAN voucher minuman gratis (id: 1)
+      if (!selectedVoucher || selectedVoucher.id !== 1) {
+        // Maka sapu bersih minuman 'free-americano-001' dari keranjang!
+        setCartItems((prevItems) => 
+          prevItems.filter((item) => item.id !== 'free-americano-001')
+        );
+      }
+    }
+  }, [selectedVoucher, isLoaded]);
+
   const addToCart = (newItem: CartItem) => {
     setCartItems((prevItems) => {
       const existingItemIndex = prevItems.findIndex((item) => item.cartItemId === newItem.cartItemId);
@@ -102,16 +115,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   let discountAmount = 0;
   
   if (selectedVoucher) {
-    // FIX: Patokan pakai ID Voucher (Lebih aman!)
     if (selectedVoucher.id === 2) {
       // Weekly Rewards: Diskon 15% dari subtotal
       discountAmount = subtotal * 0.15;
     } 
     else if (selectedVoucher.id === 1) {
-      // Monthly Rewards: Gratis Iced Americano (Misal dipotong Rp 32.000)
-      discountAmount = 32000; 
-      // Kalau subtotalnya di bawah 32rb, diskonnya maksimal seharga subtotal biar nggak minus
-      if (discountAmount > subtotal) discountAmount = subtotal;
+      // 🚨 FIX DOUBLE DISCOUNT:
+      // Karena item Ice Americano udah kita tembak dengan harga Rp 0,
+      // discountAmount harusnya 0 aja biar ga dobel kepotong di subtotal.
+      discountAmount = 0; 
     }
   }
 

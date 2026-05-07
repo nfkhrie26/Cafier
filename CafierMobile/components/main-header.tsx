@@ -1,39 +1,48 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, Platform, StatusBar } from 'react-native';
-import api from '@/service/utils'; // 🚨 Pastikan path api-nya bener ya
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router'; // 🚨 IMPORT INI DITAMBAHKAN
+import React, { useCallback, useState } from 'react'; // 🚨 useCallback DITAMBAHKAN
+import { Image, Platform, StatusBar, StyleSheet, Text, View } from 'react-native';
+import api from '@/service/utils';
 
 export default function MainHeader() {
   const [userData, setUserData] = useState<any>(null);
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
+  // 🚨 GANTI useEffect JADI useFocusEffect
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserData = async () => {
+        try {
+          const response = await api.get('/user');
+          setUserData(response.data);
+        } catch (error) {
+          console.log("Header gagal ambil data user:", error);
+        }
+      };
 
-  const fetchUserData = async () => {
-    try {
-      // 🚨 Ambil data user yang lagi login (biar muncul nama Dauhan, bukan Ada Wong lagi)
-      const response = await api.get('/user');
-      setUserData(response.data);
-    } catch (error) {
-      console.log("Header gagal ambil data user:", error);
-    }
-  };
+      fetchUserData();
+    }, [])
+  );
 
-  // Ambil nama depan aja biar gak kepanjangan di header
   const displayName = userData?.name ? userData.name.split(' ')[0] : "User";
   const displayEmail = userData?.email || "loading...";
 
   return (
     <View style={styles.header}>
       <View>
-        <Text style={styles.welcomeText}>Welcome Back {displayName}</Text>
+        <Text style={styles.welcomeText}>Welcome Back, {displayName}! </Text>
         <Text style={styles.emailText}>{displayEmail}</Text>
       </View>
-      <Image
-        // 🚨 Sementara pake foto ini dulu, nanti kalau ada API foto tinggal ganti uri
-        source={require("@/assets/images/adawong.jpg")} 
-        style={styles.avatar}
-      />
+      
+      {userData?.photo ? (
+        <Image
+          source={{ uri: userData.photo }} 
+          style={styles.avatar}
+        />
+      ) : (
+        <View style={[styles.avatar, styles.defaultAvatar]}>
+          <Ionicons name="person" size={26} color="#5A3E2B" />
+        </View>
+      )}
     </View>
   );
 }
@@ -43,7 +52,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#422A1E",
     paddingHorizontal: 25,
     paddingBottom: 25,
-    // Atur jarak aman buat status bar (Notch iPhone/Android)
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -73,4 +81,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, 
     borderColor: 'rgba(255,255,255,0.3)' 
   },
+  defaultAvatar: {
+    backgroundColor: '#EFE2CD',
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });

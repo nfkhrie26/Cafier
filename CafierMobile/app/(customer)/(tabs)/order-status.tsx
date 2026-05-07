@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, Platform, StatusBar, ActivityIndicator } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import api, { IMAGE_BASE_URL } from '@/service/utils'; 
+import MainHeader from '@/components/main-header';
 
 export default function OrderStatusScreen() {
   const router = useRouter();
@@ -14,18 +15,30 @@ export default function OrderStatusScreen() {
   const statusSteps = ['Order\nConfirmed', 'Payment', 'Processed', 'Pickup'];
 
   useEffect(() => {
-    if (id) {
-      fetchOrderDetails();
-    } else {
-      setLoading(false); 
-    }
+    fetchOrderDetails();
   }, [id]);
 
   const fetchOrderDetails = async () => {
+    setLoading(true);
     try {
-      const response = await api.get(`/orders/${id}`); 
-      const dataAsli = response.data.data || response.data;
-      setOrderData(dataAsli); 
+      if (id) {
+        const response = await api.get(`/orders/${id}`); 
+        setOrderData(response.data.data || response.data); 
+      } else {
+        const response = await api.get('/orders');
+        const allOrders = response.data.data || response.data;
+
+        if (allOrders && allOrders.length > 0) {
+          const activeOrder = allOrders.find((o: any) => {
+            const s = o.status?.toLowerCase();
+            return s !== 'completed' && s !== 'pickup' && s !== 'selesai' && s !== 'ready';
+          });
+
+          setOrderData(activeOrder || null);
+        } else {
+          setOrderData(null);
+        }
+      }
     } catch (error) {
       console.error("Gagal ambil data order:", error);
     } finally {
@@ -35,7 +48,7 @@ export default function OrderStatusScreen() {
 
   const getStatusIndex = (status: string) => {
     const s = status?.toLowerCase();
-    if (s === 'ready' || s === 'completed' || s === 'pickup') return 3;
+    if (s === 'ready' || s === 'completed' || s === 'pickup' || s === 'selesai') return 3;
     if (s === 'processing' || s === 'processed' || s === 'diproses') return 2;
     if (s === 'paid' || s === 'lunas' || s === 'payment_success') return 1;
     return 0; 
@@ -45,18 +58,23 @@ export default function OrderStatusScreen() {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color="#C07C33" />
-        <Text style={{ marginTop: 10, color: '#422A1E' }}>Memuat pesananmu...</Text>
+        <Text style={{ marginTop: 10, color: '#422A1E', fontWeight: 'bold' }}>Memuat pesananmu...</Text>
       </View>
     );
   }
 
   if (!orderData) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ marginBottom: 20 }}>Pesanan tidak ditemukan.</Text>
-        <TouchableOpacity style={styles.homeBtn} onPress={() => router.push('../profile')}>
-          <Text style={styles.homeBtnText}>Kembali</Text>
-        </TouchableOpacity>
+      <View style={styles.container}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <MainHeader />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Ionicons name="receipt-outline" size={80} color="#C07C33" style={{ marginBottom: 15 }} />
+          <Text style={{ marginBottom: 20, fontSize: 16, color: '#5A3E2B' }}>Belum ada pesanan aktif saat ini.</Text>
+          <TouchableOpacity style={[styles.homeBtn, { width: 200 }]} onPress={() => router.push('../homepages')}>
+            <Text style={styles.homeBtnText}>Pesan Sekarang</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -71,16 +89,7 @@ export default function OrderStatusScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.welcome}>Welcome Back Ada</Text>
-          <Text style={styles.email}>Adawong@gmail.com</Text>
-        </View>
-        <Image
-          source={require("@/assets/images/adawong.jpg")}
-          style={styles.avatar}
-        />
-      </View>
+      <MainHeader />
 
       <ScrollView 
         style={styles.scrollArea}
@@ -130,43 +139,51 @@ export default function OrderStatusScreen() {
           <View style={styles.itemsList}>
             {orderData.items && orderData.items.map((item: any, index: number) => {
               
-              // 🚨 LOGIKA BARU ANTI DOBEL URL
+              const itemName = item.product?.name || item.name || '';
+              // 🚨 DETEKSI: Apakah namanya ada unsur 'Americano'?
+              const isAmericano = itemName.toLowerCase().includes('americano');
+
               let imagePath = item.product?.image || item.image || '';
               let finalImageUrl = '';
 
               if (imagePath.startsWith('http')) {
-                // Kalau Fakhrie ngasih udah full url (https://...), langsung pake
                 finalImageUrl = imagePath;
               } else {
-                // Kalau cuma path doang (/products/coffee.png), gabungin sama Base URL
                 if (imagePath && !imagePath.startsWith('/')) {
                   imagePath = '/' + imagePath;
                 }
                 finalImageUrl = `${IMAGE_BASE_URL}${imagePath}`;
               }
-              
-              console.log(`URL Fix item ke-${index}:`, finalImageUrl);
 
               return (
                 <View key={index} style={styles.itemRow}>
-                  {finalImageUrl ? (
+                  {/* 🚨 TRIK RENDER GAMBAR */}
+                  {isAmericano ? (
+                    // Kalau itu Americano, paksa pakai foto lokal
+                    <Image 
+                      source={require('@/assets/images/americano.png')} 
+                      style={styles.itemImage} 
+                    />
+                  ) : finalImageUrl && finalImageUrl !== IMAGE_BASE_URL + '/' ? (
+                    // Kalau minuman lain yang ada gambarnya
                      <Image 
                        source={{ uri: finalImageUrl }} 
                        style={styles.itemImage} 
                      />
                   ) : (
+                    // Kalau error/gak ada gambar sama sekali
                     <View style={[styles.itemImage, { backgroundColor: '#EEE', justifyContent: 'center', alignItems: 'center' }]}>
                        <Ionicons name="image-outline" size={24} color="#999" />
                     </View>
                   )}
                   
                   <View style={styles.itemInfo}>
-                    <Text style={styles.itemName}>{item.product?.name || item.name}</Text>
+                    <Text style={styles.itemName}>{itemName}</Text>
                     <Text style={styles.itemDesc}>
                       {item.notes || 'Normal'} 
                     </Text>
                   </View>
-                  <Text style={styles.itemQty}>{item.quantity || item.qty}</Text>
+                  <Text style={styles.itemQty}>{item.quantity || item.qty}x</Text>
                 </View>
               );
             })}
@@ -184,20 +201,6 @@ export default function OrderStatusScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EDE3D3' },
-  header: {
-    backgroundColor: "#422A1E",
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 50,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    zIndex: 10,
-    elevation: 5,
-  },
-  welcome: { color: "#fff", fontSize: 20, fontWeight: "bold" },
-  email: { color: "#fff", opacity: 0.8, fontSize: 13 },
-  avatar: { width: 45, height: 45, borderRadius: 25 },
   scrollArea: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 150, paddingTop: 10 },
   logoContainer: { alignItems: "center", justifyContent: "center" },

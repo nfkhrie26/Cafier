@@ -8,6 +8,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ScrollView, // 🚨 IMPORT SCROLLVIEW DI SINI
 } from "react-native";
 
 const { width } = Dimensions.get("window");
@@ -19,7 +20,6 @@ const formatRupiah = (angka: number) =>
     minimumFractionDigits: 0,
   }).format(angka);
 
-// 🚨 Tambah prop numColumns (default 1 buat list biasa)
 export default function ProductList({
   data = [],
   searchQuery = "",
@@ -45,23 +45,29 @@ export default function ProductList({
     );
   }
 
-  // 🚨 Logika buat nentuin gaya kartu (List vs Grid)
   const isGrid = numColumns > 1;
 
   return (
-    <View style={[styles.container, isGrid && styles.gridWrapper]}>
-      {/* FIX 1: Nambahin 'index' biar error key kuning hilang */}
+    // 🚨 UBAH VIEW JADI SCROLLVIEW
+    // contentContainerStyle dipake buat flexWrap kalau mode Grid
+    <ScrollView 
+      showsVerticalScrollIndicator={false}
+      style={styles.container}
+      contentContainerStyle={[
+        isGrid && styles.gridWrapper,
+        { paddingBottom: 100 } // 🚨 Jaga-jaga biar bawahnya nggak kepotong navbar
+      ]}
+    >
       {filteredData.map((product, index) => {
         let isTersedia = product.stock > 0 || product.is_available === true;
         let pesanHabis = product.stock <= 0 ? "Stok Habis" : "Tidak Tersedia";
 
         return (
           <TouchableOpacity
-            // FIX 1: Update key pakai index sebagai cadangan
             key={product._id || product.id || index.toString()}
             style={[
               styles.productCard,
-              isGrid ? styles.gridCard : styles.listCard, // 🚨 Switch gaya di sini
+              isGrid ? styles.gridCard : styles.listCard, 
               !isTersedia && { opacity: 0.5 },
             ]}
             disabled={!isTersedia}
@@ -84,7 +90,6 @@ export default function ProductList({
             <View
               style={isGrid ? styles.imageWrapperGrid : styles.imageWrapperList}
             >
-              {/* FIX 2: Kasih gambar default/fallback kalau gambar dari API kosong atau error */}
               <Image
                 source={
                   product.image
@@ -104,7 +109,6 @@ export default function ProductList({
             <View
               style={[
                 styles.productInfo,
-                // 🚨 Kalo dia mode Grid, ilangin margin kiri, kasih jarak atas, dan pusatin kontennya!
                 isGrid && { marginLeft: 0, marginTop: 8, alignItems: "center" },
               ]}
             >
@@ -138,12 +142,15 @@ export default function ProductList({
           </TouchableOpacity>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { width: "100%" },
+  container: { 
+    flex: 1, // 🚨 Wajib biar ScrollView ngisi penuh wadahnya
+    width: "100%" 
+  },
   gridWrapper: {
     flexDirection: "row",
     flexWrap: "wrap",

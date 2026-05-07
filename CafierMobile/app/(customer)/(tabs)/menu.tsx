@@ -1,109 +1,49 @@
+// MenuScreen.tsx
 import ProductList from '@/components/ProductList';
 import api, { IMAGE_BASE_URL } from '@/service/utils';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { styles } from '../../../(style)/menu.styles';
 
-// const categories = [
-//   { id: '1', name: 'Coffee', img: require('@/assets/images/latte.png') },
-//   { id: '2', name: 'Non Coffee', img: require('@/assets/images/Matcha.png') }, 
-//   { id: '3', name: 'Desserts', img: require('@/assets/images/mochi.png') },
-// ];
-
 export default function MenuScreen() {
-  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState('Coffee');
   const [searchQuery, setSearchQuery] = useState('');
-
-  const [dataKopi, setDataKopi] = useState<any[]>([]);
-  const [dataNonKopi, setDataNonKopi] = useState<any[]>([]);
-  const [dataDessert, setDataDessert] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState<any>(true);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCategory = async () => {
-      try{
-        const response = await api.get('/categories');
-        const semuaCategory = response.data.data;
-
-        setCategories(semuaCategory);
-      } catch (error: any) {
-        console.error('❌ GAGAL NARIK DATA!');
-        console.error('Pesan Error:', error.message);
-      } finally {
-        setIsLoading(false);
-      }};
-
-    const fetchMenu = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get('/products');
-        console.log("API BERHASIL! Ini balasan mentahnya:", response.data); // CCTV 2
-        
-        const semuaMenu = response.data.data;
-        console.log("3. Jumlah menu yang ditarik:", semuaMenu?.length); // CCTV 3
-
-        if(semuaMenu && semuaMenu.length > 0) {
-            console.log("4. Contoh isi 1 barang:", JSON.stringify(semuaMenu[0], null, 2)); // CCTV 4
-        }
-
-        setDataKopi(semuaMenu.filter((item: any) => item.category?.name === 'Coffee'));
-        setDataNonKopi(semuaMenu.filter((item: any) => item.category?.name === 'Non Coffee'));
-        setDataDessert(semuaMenu.filter((item: any) => item.category?.name === 'Desserts'));
-        
-        console.log("5. Selesai misahin data!"); // CCTV 5
-
-      } catch (error: any) {
-        console.error('❌ GAGAL NARIK DATA!');
-        console.error('Pesan Error:', error.message);
-        
-        if (error.response) {
-            console.error('Status dari Laravel:', error.response.status);
-            console.error('Balasan dari Laravel:', error.response.data);
-        } else if (error.request) {
-            console.error('Kagak ada balasan sama sekali dari server. Cek IP/Ngrok lu!');
-        }
+        const [catRes, prodRes] = await Promise.all([
+          api.get('/categories'),
+          api.get('/products')
+        ]);
+        setCategories(catRes.data.data);
+        setAllProducts(prodRes.data.data);
+      } catch (e) {
+        console.error("Gagal tarik data Cafier:", e);
       } finally {
         setIsLoading(false);
       }
     };
-
-    fetchCategory();
-    fetchMenu();
+    fetchData();
   }, []);
 
   const renderContent = () => {
-    if (isLoading) {
-      return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#D4C4A8" />
-          <Text style={{ marginTop: 10, color: '#888' }}>Menyiapkan hidangan...</Text>
-        </View>
-      );
-    }
+    if (isLoading) return <ActivityIndicator size="large" color="#D4C4A8" style={{ flex: 1 }} />;
     
-    let currentData: any[] = [];
-    if (activeCategory === 'Coffee') currentData = dataKopi;
-    if (activeCategory === 'Non Coffee') currentData = dataNonKopi;
-    if (activeCategory === 'Desserts') currentData = dataDessert;
+    // Filter data berdasarkan kategori aktif
+    const currentData = allProducts.filter((item: any) => item.category?.name === activeCategory);
 
-    return <ProductList data={currentData} searchQuery={searchQuery} origin='/menu' />;
-  };
-
-  const getHeaderTitle = () => {
-    if (activeCategory === 'Coffee') return 'Coffee';
-    if (activeCategory === 'Non Coffee') return 'Non Coffee';
-    if (activeCategory === 'Desserts') return 'Desserts';
-    return 'Menu';
-  };
-
-  const getSearchPlaceholder = () => {
-    if (activeCategory === 'Coffee') return 'Latte';
-    if (activeCategory === 'Non Coffee') return 'Matcha';
-    if (activeCategory === 'Desserts') return 'Mochi'; 
-    return 'Search...';
+    // 🚨 KUNCI 3: View pembungkus ini HARUS punya flex: 1
+    return (
+      <View style={{ flex: 1 }}>
+        <ProductList data={currentData} searchQuery={searchQuery} origin='/menu' />
+      </View>
+    );
   };
 
   return (
@@ -111,23 +51,21 @@ export default function MenuScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{getHeaderTitle()}</Text>
+        <Text style={styles.headerTitle}>{activeCategory}</Text>
       </View>
 
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#000" />
         <TextInput 
-          style={[styles.searchInput, { outlineStyle: 'none' } as any]} 
-          placeholder={getSearchPlaceholder()} 
-          placeholderTextColor="#888" 
+          style={styles.searchInput} 
+          placeholder="Cari menu..." 
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
 
       <View style={styles.contentContainer}>
-        
-        {/* SIDEBAR KIRI */}
+        {/* SISI KIRI: Diem (Statik) */}
         <View style={styles.sidebar}>
           {categories.map((cat) => (
             <TouchableOpacity 
@@ -136,10 +74,7 @@ export default function MenuScreen() {
                 styles.categoryCard, 
                 activeCategory === cat.name && { backgroundColor: '#D4C4A8', borderColor: '#A8926D', borderWidth: 1 } 
               ]}
-              onPress={() => {
-                setActiveCategory(cat.name);
-                setSearchQuery(''); 
-              }}
+              onPress={() => setActiveCategory(cat.name)}
             >
               <Image source={{ uri: `${IMAGE_BASE_URL}${cat.image}`}} style={styles.categoryImage} />
               <Text style={[styles.categoryText, activeCategory === cat.name && { color: '#574133' }]}>
@@ -149,11 +84,10 @@ export default function MenuScreen() {
           ))}
         </View>
 
-        <View style={{ flex: 1 }}>
-           {/* Di sini komponen list-nya bakal kerender! */}
+        {/* SISI KANAN: Gerak (Scrollable lewat ProductList) */}
+        <View style={styles.menuArea}>
            {renderContent()}
         </View>
-
       </View>
     </View>
   );

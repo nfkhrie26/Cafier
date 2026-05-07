@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react"; // 🚨 Tambahin useCallback
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router"; // 🚨 Tambahin useFocusEffect
 import * as SecureStore from "expo-secure-store";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient"; 
@@ -14,46 +14,57 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
 
   const TARGET_GOLD = 31; 
-  const TARGET_PLATINUM = 71; 
+  const TARGET_PLATINUM = 81; 
 
-  useEffect(() => {
-    fetchPointsFromHistory();
-  }, []);
+  // 🚨 GANTI useEffect JADI useFocusEffect
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-  const fetchPointsFromHistory = async () => {
-    try {
-      const response = await api.get('/history');
-      const dataAsli = response.data.data || [];
-      
-      let calculatedPoints = 0;
+      const fetchPointsFromHistory = async () => {
+        setLoading(true); // Biar muter dulu pas lagi ngitung
+        try {
+          const response = await api.get('/history');
+          if (!isActive) return;
 
-      dataAsli.forEach((order: any) => {
-        const status = order.status?.toLowerCase();
-        if (['lunas', 'diproses', 'processing', 'ready', 'completed'].includes(status)) {
-          order.items?.forEach((item: any) => {
-            const notes = (item.notes || '').toLowerCase();
-            const variantNames = item.variantDetails ? item.variantDetails.map((v: any) => v.name.toLowerCase()).join(' ') : '';
-            const combinedText = `${notes} ${variantNames} ${item.name?.toLowerCase()}`;
+          const dataAsli = response.data.data || [];
+          let calculatedPoints = 0;
 
-            let pts = 2; 
-            if (combinedText.includes('large')) {
-              pts = 6;
-            } else if (combinedText.includes('regular') || combinedText.includes('normal')) {
-              pts = 4;
-            } else {
-              pts = 2;
+          dataAsli.forEach((order: any) => {
+            const status = order.status?.toLowerCase();
+            if (['lunas', 'diproses', 'processing', 'ready', 'completed'].includes(status)) {
+              order.items?.forEach((item: any) => {
+                const notes = (item.notes || '').toLowerCase();
+                const variantNames = item.variantDetails ? item.variantDetails.map((v: any) => v.name.toLowerCase()).join(' ') : '';
+                const combinedText = `${notes} ${variantNames} ${item.name?.toLowerCase()}`;
+
+                let pts = 2; 
+                if (combinedText.includes('large')) {
+                  pts = 6;
+                } else if (combinedText.includes('regular') || combinedText.includes('normal')) {
+                  pts = 4;
+                } else {
+                  pts = 2;
+                }
+                calculatedPoints += (pts * (item.quantity || item.qty || 1));
+              });
             }
-            calculatedPoints += (pts * (item.quantity || item.qty || 1));
           });
+          setTotalPoints(calculatedPoints);
+        } catch (error) {
+          console.log("Gagal hitung poin:", error);
+        } finally {
+          if (isActive) setLoading(false);
         }
-      });
-      setTotalPoints(calculatedPoints);
-    } catch (error) {
-      console.log("Gagal hitung poin:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      };
+
+      fetchPointsFromHistory();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   const handleLogout = async () => {
     try {
@@ -126,7 +137,6 @@ export default function ProfileScreen() {
         <View style={styles.logoContainer}>
           <Image 
             source={require('@/assets/images/serene-logo-cokelat.png')} 
-            // 🚨 GEDEIN DI SINI: height diubah jadi 250 biar gak kecil lagi
             style={{ width: 250, height: 250, resizeMode: 'contain' }} 
           />
         </View>
@@ -180,7 +190,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#EDE3D3" },
   scrollArea: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 150, paddingTop: 10 },
-  // 🚨 GEDEIN DI SINI JUGA: height diubah jadi 150 biar gambarnya gak kepotong container
   logoContainer: { alignItems: "center", justifyContent: "center", height: 150, marginTop: 10, marginBottom: 20 },
   card: {
     marginHorizontal: 20,

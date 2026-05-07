@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Platform, StatusBar, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Stack, useFocusEffect, useRouter } from 'expo-router'; 
 import { Ionicons } from '@expo/vector-icons';
 import api, { IMAGE_BASE_URL } from '@/service/utils';
+import MainHeader from '@/components/main-header'; 
 
 export default function OrderHistory() {
   const router = useRouter();
@@ -10,45 +11,47 @@ export default function OrderHistory() {
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-  const fetchHistory = async () => {
-    try {
-      const response = await api.get('/history');
-      const dataAsli = response.data.data || [];
-      setHistoryData(dataAsli);
-    } catch (error) {
-      console.error("Gagal load history:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const fetchHistory = async () => {
+        setLoading(true);
+        try {
+          const response = await api.get('/history');
+          if (isActive) {
+            const dataAsli = response.data.data || [];
+            setHistoryData(dataAsli);
+          }
+        } catch (error) {
+          console.error("Gagal load history:", error);
+        } finally {
+          if (isActive) setLoading(false);
+        }
+      };
+
+      fetchHistory();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   const getStatusColor = (status: string) => {
     const s = status?.toLowerCase();
     if (s === 'batal' || s === 'cancel') return '#E74C3C'; 
     if (s === 'pending') return '#F39C12'; 
     if (s === 'diproses' || s === 'processing') return '#3498DB'; 
-    if (s === 'lunas' || s === 'completed' || s === 'ready') return '#2ECC71'; 
+    if (s === 'lunas' || s === 'completed' || s === 'ready' || s === 'selesai' || s === 'pickup') return '#2ECC71'; 
     return '#95A5A6'; 
   };
 
   return (
     <View style={styles.container}>
-      
-      {/* HEADER */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.welcomeText}>Welcome Back Ada</Text>
-          <Text style={styles.emailText}>Adawong@gmail.com</Text>
-        </View>
-        <Image 
-          source={require('@/assets/images/adawong.jpg')} 
-          style={styles.profileImage} 
-        />
-      </View>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <MainHeader />
 
       <ScrollView 
         style={styles.scrollArea}
@@ -65,7 +68,7 @@ export default function OrderHistory() {
         {loading ? (
           <View style={{ alignItems: 'center', marginTop: 50 }}>
              <ActivityIndicator size="large" color="#422A1E" />
-             <Text style={{ marginTop: 10, color: '#422A1E' }}>Memuat riwayat...</Text>
+             <Text style={{ marginTop: 10, color: '#422A1E', fontWeight: 'bold' }}>Memuat riwayat...</Text>
           </View>
         ) : historyData.length === 0 ? (
           <View style={{ alignItems: 'center', marginTop: 50 }}>
@@ -89,11 +92,13 @@ export default function OrderHistory() {
 
                 {order.items && order.items.map((item: any, index: number) => {
                   
-                  // 🚨 LOGIKA KEBAL ERROR
+                  // 🚨 DETEKSI NAMA: Biar tau ini Americano atau bukan
+                  const itemName = item.product?.name || item.name || '';
+                  const isAmericano = itemName.toLowerCase().includes('americano');
+
                   let imagePath = item.product?.image || item.image;
                   let finalImageUrl = '';
 
-                  // Cek dulu apakah imagePath itu ada DAN berupa string
                   if (imagePath && typeof imagePath === 'string') {
                     if (imagePath.startsWith('http')) {
                       finalImageUrl = imagePath;
@@ -107,7 +112,11 @@ export default function OrderHistory() {
 
                   return (
                     <View key={index} style={styles.itemRow}>
-                      {finalImageUrl ? (
+                      
+                      {/* 🚨 TRIK FOTO LOKAL BERAKSI DI SINI */}
+                      {isAmericano ? (
+                        <Image source={require('@/assets/images/americano.png')} style={styles.itemImage} />
+                      ) : finalImageUrl && finalImageUrl !== IMAGE_BASE_URL + '/' ? (
                         <Image source={{ uri: finalImageUrl }} style={styles.itemImage} />
                       ) : (
                         <View style={[styles.itemImage, { backgroundColor: '#EEE', justifyContent: 'center', alignItems: 'center' }]}>
@@ -116,10 +125,10 @@ export default function OrderHistory() {
                       )}
                       
                       <View style={styles.itemInfo}>
-                        <Text style={styles.itemName}>{item.product?.name || item.name}</Text>
+                        <Text style={styles.itemName}>{itemName}</Text>
                         <Text style={styles.itemDesc}>{item.notes || 'Normal'}</Text>
                       </View>
-                      <Text style={styles.itemQty}>{item.quantity || item.qty}</Text>
+                      <Text style={styles.itemQty}>{item.quantity || item.qty}x</Text>
                     </View>
                   );
                 })}
@@ -150,24 +159,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#E5D9C6',
   },
-  header: {
-    backgroundColor: '#422A1E',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 25,
-    paddingBottom: 20,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 50,
-    zIndex: 10, 
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-  },
-  welcomeText: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
-  emailText: { color: '#FFF', fontSize: 13, opacity: 0.8, marginTop: 2 },
-  profileImage: { width: 45, height: 45, borderRadius: 25, borderWidth: 1, borderColor: '#FFF' },
   scrollArea: {
     flex: 1,
   },

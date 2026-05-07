@@ -34,6 +34,9 @@ export default function CheckoutScreen() {
   const tax = subtotal * 0.11;
   const grandTotal = subtotal + tax - discountAmount;
 
+  // 🚨 LOGIKA BARU: Deteksi apakah voucher yang dipakai itu voucher minuman gratis
+  const isFreeItemVoucher = selectedVoucher && (selectedVoucher.title.toLowerCase().includes('monthly') || selectedVoucher.desc?.toLowerCase().includes('americano'));
+
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
     setLoading(true);
@@ -57,7 +60,6 @@ export default function CheckoutScreen() {
     }
   };
 
-  // --- FUNGSI NANYA STATUS (SETELAH WEBVIEW DITUTUP) ---
   const checkStatusKeLaravel = async () => {
     if (!invoiceNumber) return; 
     setLoading(true); 
@@ -65,12 +67,10 @@ export default function CheckoutScreen() {
         const response = await api.get(`/checkout/status/${invoiceNumber}`);
         const dataRes = response.data;
         
-        // Sesuai terminal kamu, statusnya "diproses" atau "lunas"
         if (dataRes.status === 'lunas' || dataRes.status === 'diproses') {
             Alert.alert('Lunas Bos! 🎉', 'Pembayaran berhasil dikonfirmasi.');
             clearCart();
             
-            // 🚨 Nangkep "id" sesuai yang dikirim Fakhrie di terminal tadi
             const orderId = dataRes.id;
             
             router.replace({
@@ -99,7 +99,6 @@ export default function CheckoutScreen() {
     }
   };
 
-  // --- SATPAM PATROLI (POLLING SETIAP 5 DETIK) ---
   useEffect(() => {
     let interval: any;
 
@@ -114,7 +113,6 @@ export default function CheckoutScreen() {
             setShowPayment(false); 
             clearCart();
             
-            // 🚨 Nangkep "id" (Tanpa garis bawah, sesuai respon Fakhrie)
             const orderId = dataRes.id;
 
             console.log("Satpam dapet ID:", orderId);
@@ -154,7 +152,11 @@ export default function CheckoutScreen() {
           {cartItems.map((item) => (
             <View key={item.id} style={styles.itemCard}>
               <View style={styles.imageContainer}>
-                <Image source={{ uri: item.image }} style={styles.itemImage} />
+                {/* 🚨 TRIK FOTO LOKAL: Cek ID minumannya, kalau free-americano langsung tembak foto lokal */}
+                <Image 
+                  source={item.id === 'free-americano-001' ? require('@/assets/images/americano.png') : { uri: item.image }} 
+                  style={styles.itemImage} 
+                />
               </View>
               <View style={styles.itemDetails}>
                 <Text style={styles.itemNameText}>{item.name}</Text>
@@ -168,7 +170,12 @@ export default function CheckoutScreen() {
                 
                 {item.notes ? <Text style={[styles.detailText, { fontStyle: 'italic', marginTop: 4 }]}>Notes : {item.notes}</Text> : null}
 
-                <Text style={styles.itemPrice}>{formatRupiah(item.price * item.qty)}</Text>
+                {/* Harga coret kalau itemnya gratisan */}
+                {item.price === 0 ? (
+                  <Text style={[styles.itemPrice, { color: '#C87A3F' }]}>FREE</Text>
+                ) : (
+                  <Text style={styles.itemPrice}>{formatRupiah(item.price * item.qty)}</Text>
+                )}
                 
                 <View style={styles.qtyContainer}>
                   <TouchableOpacity onPress={() => updateQty(item.id, 'minus')}>
@@ -196,9 +203,19 @@ export default function CheckoutScreen() {
                 <Text style={[styles.voucherStatusText, selectedVoucher && { color: '#C87A3F' }]}>
                   {selectedVoucher ? '1 voucher berhasil dipakai' : 'Pakai voucher diskon'}
                 </Text>
-                {selectedVoucher && discountAmount > 0 && (
-                  <Text style={[styles.discountDetailText, { color: '#C87A3F' }]}>Dapat diskon {formatRupiah(discountAmount)} 🎉</Text>
-                )}
+                
+                {/* 🚨 TAMPILAN DINAMIS: Kalau voucher minuman, munculin text khusus */}
+                {selectedVoucher ? (
+                  isFreeItemVoucher ? (
+                    <Text style={[styles.discountDetailText, { color: '#C87A3F', marginTop: 4, fontWeight: 'bold' }]}>
+                      Enjoy your free Ice Americano! ☕
+                    </Text>
+                  ) : discountAmount > 0 ? (
+                    <Text style={[styles.discountDetailText, { color: '#C87A3F', marginTop: 4 }]}>
+                      Dapat diskon {formatRupiah(discountAmount)} 🎉
+                    </Text>
+                  ) : null
+                ) : null}
               </View>
             </View>
             
@@ -234,10 +251,17 @@ export default function CheckoutScreen() {
               <Text style={styles.summaryValue}>{formatRupiah(tax)}</Text>
             </View>
 
-            {selectedVoucher && discountAmount > 0 && (
+            {/* 🚨 RINCIAN PEMBAYARAN DINAMIS */}
+            {selectedVoucher && !isFreeItemVoucher && discountAmount > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={[styles.summaryLabel, { color: '#C87A3F' }]}>Promo ({selectedVoucher.title})</Text>
                 <Text style={[styles.summaryValue, { color: '#C87A3F' }]}>-{formatRupiah(discountAmount)}</Text>
+              </View>
+            )}
+            {selectedVoucher && isFreeItemVoucher && (
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: '#C87A3F' }]}>Promo ({selectedVoucher.title})</Text>
+                <Text style={[styles.summaryValue, { color: '#C87A3F', fontWeight: 'bold' }]}>Free Item 🎉</Text>
               </View>
             )}
             

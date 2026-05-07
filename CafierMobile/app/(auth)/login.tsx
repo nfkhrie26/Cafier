@@ -6,11 +6,15 @@ import * as SecureStore from "expo-secure-store";
 import React, { useState } from "react";
 import {
   Alert,
+  Keyboard,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
@@ -24,21 +28,17 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      // Pake api.post aja, gak perlu nulis link panjang-panjang & header lagi
       const response = await api.post("/login", {
         email: email,
         password: password,
       });
 
-      // 1. Tangkep token dari balikan Laravel
       const token = response.data.token;
       const role = response.data.role;
 
-      // 2. Simpen token ke brankas hape (Secure Store)
       await SecureStore.setItemAsync("userToken", token);
       await SecureStore.setItemAsync("userRole", role);
 
-      // 3. Kalo sukses, tendang user ke halaman utama (Tabs)
       if (role == "customer") {
         Alert.alert("Sukses", "Berhasil Login, bro!");
         router.replace("../(customer)/(tabs)/homepages");
@@ -50,7 +50,6 @@ export default function LoginScreen() {
         router.replace("../(barista)/(tabs)/dashboard");
       }
     } catch (error: any) {
-      // Tangkep error dari Laravel (misal: password salah)
       console.log(error.response?.data?.message);
       Alert.alert(
         "Gagal",
@@ -60,85 +59,97 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
       <Stack.Screen options={{ headerShown: false }} />
+      
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={styles.topHeader}>
+            <HeaderLogo />
+          </View>
 
-      <View style={styles.topHeader}>
-        <HeaderLogo />
-      </View>
+          <View style={styles.formContainer}>
+            <Text style={styles.welcomeTitle}>WELCOME !</Text>
 
-      <View style={styles.formContainer}>
-        <Text style={styles.welcomeTitle}>WELCOME !</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={[styles.input, webOutlineStyle as any]}
+                onChangeText={setEmail}
+                placeholder="example@gmail.com"
+                placeholderTextColor="#A8926D"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Username</Text>
-          <TextInput
-            style={[styles.input, webOutlineStyle as any]}
-            onChangeText={setEmail}
-            placeholder="Username"
-            placeholderTextColor="#A8926D"
-          />
-        </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[styles.passwordInput, webOutlineStyle as any]}
+                  onChangeText={setPassword}
+                  placeholder="**********"
+                  placeholderTextColor="#A8926D"
+                  secureTextEntry={!isPasswordVisible}
+                />
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={[styles.passwordInput, webOutlineStyle as any]}
-              onChangeText={setPassword}
-              placeholder="**********"
-              placeholderTextColor="#A8926D"
-              secureTextEntry={!isPasswordVisible}
-            />
+                <TouchableOpacity
+                  onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                  style={styles.eyeIcon}
+                >
+                  <Ionicons
+                    name={isPasswordVisible ? "eye-off" : "eye"}
+                    size={20}
+                    color="#A8926D"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.loginButtonText}>Login</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-              style={styles.eyeIcon}
+              onPress={() => router.push("/forget-password" as any)}
             >
-              <Ionicons
-                name={isPasswordVisible ? "eye-off" : "eye"}
-                size={20}
-                color="#A8926D"
-              />
+              <Text style={styles.forgotText}>Forget the password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/register" as any)}>
+              <Text style={styles.registerText}>
+                Don’t have an account?{" "}
+                <Text style={{ fontWeight: "bold" }}>register now</Text>
+              </Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Login</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.push("/forget-password" as any)}
-        >
-          <Text style={styles.forgotText}>Forget the password?</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.push("/register" as any)}>
-          <Text style={styles.registerText}>
-            Don’t have an account?{" "}
-            <Text style={{ fontWeight: "bold" }}>register now</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
-// ... styles tetep sama kayak sebelumnya ...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#3E2A1D",
   },
   topHeader: {
-    flex: 0.5,
+    height: 250, // 🚨 Pakai tinggi pasti (fixed), jangan pake flex: 0.5 lagi
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: 40,
+    paddingTop: 20,
   },
   formContainer: {
-    flex: 1.5,
+    flex: 1, // 🚨 Pakai flex 1 biar otomatis ngisi sisa layar sampai mentok bawah
     backgroundColor: "#E1D7C6",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -148,7 +159,7 @@ const styles = StyleSheet.create({
   },
   welcomeTitle: {
     fontSize: 28,
-    fontFamily: "serif",
+    fontFamily: "serif", // Kalau mau lebih aman di semua HP, bisa dihilangkan atau ganti font bawaan
     color: "#3E2A1D",
     letterSpacing: 2,
     fontWeight: "bold",
@@ -225,5 +236,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#3E2A1D",
     textAlign: "center",
+    marginBottom: 40, 
   },
 });
