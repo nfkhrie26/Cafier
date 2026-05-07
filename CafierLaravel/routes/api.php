@@ -6,7 +6,6 @@ use App\Http\Controllers\Api\AuthController as ApiAuth;
 use App\Http\Controllers\Api\CheckoutController as Checkout;    
 use App\Http\Controllers\Api\CategoryController;  
 use App\Http\Controllers\Api\ProductController;
-// 1. Tambahin import ini kalau belum ada:
 use App\Http\Controllers\OrderController; 
 
 Route::get('/user', function (Request $request) {
@@ -25,8 +24,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/products', [ProductController::class, 'index']);
     
-    // 2. Tambahin route API history di sini:
+    // 1. Ini tetep biarin aja, nanti bakal dipake sama halaman Order History
     Route::get('/history', [OrderController::class, 'history']); 
-    // 🚨 3. TAMBAHIN INI KHRIE! BUAT NAMPILIN DETAIL ORDER DI FE:
+
+    // 🚨 2. TAMBAHIN INI! Biar api.get('/orders') di Order Status gak error 404
+    // Kita "numpang" ke fungsi history karena isinya sama-sama daftar pesanan
+    Route::get('/orders', [OrderController::class, 'history']); 
+    
+    // 3. Ini buat nampilin detail order spesifik pake ID
     Route::get('/orders/{id}', [OrderController::class, 'show']);
 });
