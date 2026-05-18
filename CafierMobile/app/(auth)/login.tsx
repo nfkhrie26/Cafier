@@ -2,7 +2,7 @@ import HeaderLogo from "@/components/header-logo";
 import api from "@/service/utils"; // Import kurir khusus yang udah kita setting
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-// import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "expo-secure-store";
 import { setItemAsync } from '@/service/storage';
 import React, { useState } from "react";
 import {

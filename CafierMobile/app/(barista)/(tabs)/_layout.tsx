@@ -2,15 +2,19 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Slot, usePathname, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { deleteItemAsync } from '@/service/storage'; // Helper bunglon lu
+// import { deleteItemAsync } from '@/service/storage'; // Helper bunglon lu
+import * as SecureStore from "expo-secure-store";
 
 export default function BaristaTabLayout() {
   const router = useRouter();
   const pathname = usePathname(); // CCTV buat mantau posisi page sekarang
 
   const handleLogout = async () => {
-    await deleteItemAsync("userToken");
-    await deleteItemAsync("userRole");
+    await SecureStore.deleteItemAsync("userToken"); // hp
+    await SecureStore.deleteItemAsync("userRole");
+
+    // await deleteItemAsync("userToken"); // pc
+    // await deleteItemAsync("userRole");
     router.replace('/(auth)/login');
   };
 
