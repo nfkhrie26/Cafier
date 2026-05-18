@@ -94,7 +94,7 @@
                                              onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1572442388796-11668a67e53d?q=80&w=200&auto=format&fit=crop';">
                                     </div>
                                     <span class="font-bold text-[16px] text-[#3a2215]">{{ $item->name }}</span>
-                                </td>
+                                </td>3
                                 <td class="py-3 px-8 font-bold text-[15px]">
                                     {{ $item->total_sold }} {{ $item->category_id == 1 ? 'Cups' : 'Pcs' }}
                                 </td>
