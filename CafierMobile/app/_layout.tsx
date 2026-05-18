@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+// import * as SecureStore from 'expo-secure-store';
+import { getItemAsync } from '@/service/storage';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function RootLayout() {
@@ -12,24 +13,26 @@ export default function RootLayout() {
     const checkAuth = async () => {
       try {
         // 1. Cek isi dompet
-        const token = await SecureStore.getItemAsync('userToken');
-        const role = await SecureStore.getItemAsync('userRole');
+        // const token = await SecureStore.getItemAsync('userToken');
+        // const role = await SecureStore.getItemAsync('userRole');
 
+        const token = await getItemAsync('userToken');
+        const role = await getItemAsync('userRole');
         // 2. Cek user lagi di grup mana (auth, customer, atau barista)
         const inAuthGroup = segments[0] === '(auth)';
 
         if (!token) {
           // Kalo GAK ADA token, paksain ke halaman login!
           if (!inAuthGroup) {
-            router.replace('../(auth)/login');
+            router.replace('/(auth)/login');
           }
         } else {
           // Kalo ADA token, tapi dia nyoba balik ke halaman login, cegah!
           if (inAuthGroup) {
             if (role === 'barista') {
-              router.replace('../(barista)/(tabs)/dashboard');
+              router.replace('/(barista)/(tabs)/dashboard');
             } else {
-              router.replace('../(customer)/(tabs)/homepages');
+              router.replace('/(customer)/(tabs)/homepages');
             }
           }
         }
@@ -53,5 +56,15 @@ export default function RootLayout() {
   }
 
   // Kalo udah aman, buka gerbangnya (pake Stack biar halamannya gak numpuk)
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      {/* 🚨 DAFTARIN FOLDER GRUP LU DI SINI BIAR EXPO GAK NEBAK-NEBAK */}
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(customer)" />
+      <Stack.Screen name="(barista)" />
+      
+      {/* Jaga-jaga kalo user nyasar ke halaman yang ga ada */}
+      <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
+    </Stack>
+  );
 }

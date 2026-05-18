@@ -13,49 +13,15 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Tabs.Screen
-        name="homepages"
-        options={{
-          title: 'Beranda',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
-          ),
-        }}
-      />
-
-      {/* 2. Tab Menus */}
-      <Tabs.Screen
-        name="menus"
-        options={{
-          title: 'Menu',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'cafe' : 'cafe-outline'} size={24} color={color} />
-          ),
-        }}
-      />
-
-      {/* 3. Tab Checkout (Keranjang) */}
-      <Tabs.Screen
-        name="checkout"
-        options={{
-          title: 'Keranjang',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'cart' : 'cart-outline'} size={24} color={color} />
-          ),
-        }}
-      />
-      {/* 4. Tab Profile */}
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
-          ),
-        }}
-      />
+      {/* 🚨 BUNGKUSAN LUAR WAJIB STACK, BUKAN TABS! */}
+      <Stack screenOptions={{ headerShown: false }}>
+        
+        {/* Kasih tau Expo buat masuk ke folder (tabs) */}
+        <Stack.Screen name="(tabs)" />
+        
+        {/* Halaman error bawaan kalo user nyasar */}
+        <Stack.Screen name="+not-found" />
+        
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

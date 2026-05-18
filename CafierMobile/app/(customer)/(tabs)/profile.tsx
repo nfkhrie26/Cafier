@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from "react"; // 🚨 Tambahin useCallback
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIndicator } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router"; // 🚨 Tambahin useFocusEffect
-import * as SecureStore from "expo-secure-store";
+// import * as SecureStore from "expo-secure-store";
+import { setItemAsync, getItemAsync, deleteItemAsync } from '@/service/storage';
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient"; 
 import api from '@/service/utils'; 
@@ -68,14 +69,16 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     try {
-      const token = await SecureStore.getItemAsync("userToken");
+      // const token = await SecureStore.getItemAsync("userToken"); // hp
+      const token = await getItemAsync("userToken"); // desktop
       await api.post("/logout", {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (e) {
       console.log("Logout error skipped");
     } finally {
-      await SecureStore.deleteItemAsync("userToken");
+      // await SecureStore.deleteItemAsync("userToken"); // hp
+      await deleteItemAsync("userToken"); // desktop
       router.replace("../../../(auth)/login");
     }
   };

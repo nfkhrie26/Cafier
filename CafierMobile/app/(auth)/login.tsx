@@ -2,7 +2,8 @@ import HeaderLogo from "@/components/header-logo";
 import api from "@/service/utils"; // Import kurir khusus yang udah kita setting
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
+// import * as SecureStore from "expo-secure-store";
+import { setItemAsync } from '@/service/storage';
 import React, { useState } from "react";
 import {
   Alert,
@@ -36,8 +37,12 @@ export default function LoginScreen() {
       const token = response.data.token;
       const role = response.data.role;
 
-      await SecureStore.setItemAsync("userToken", token);
-      await SecureStore.setItemAsync("userRole", role);
+      // await SecureStore.setItemAsync("userToken", token);
+      // await SecureStore.setItemAsync("userRole", role);
+
+      await setItemAsync("userToken", token);
+      await setItemAsync("userRole", role);
+
 
       if (role == "customer") {
         Alert.alert("Sukses", "Berhasil Login, bro!");
@@ -50,11 +55,17 @@ export default function LoginScreen() {
         router.replace("../(barista)/(tabs)/dashboard");
       }
     } catch (error: any) {
-      console.log(error.response?.data?.message);
-      Alert.alert(
-        "Gagal",
-        error.response?.data?.message || "Terjadi kesalahan",
-      );
+      if (error.response) {
+        // Ini kalo Laravel nolak (misal: password salah)
+        console.log("Jawaban Laravel:", error.response.data);
+      } else if (error.request) {
+        // 🚨 INI YANG LAGI LU ALAMIN SEKARANG!
+        // Request terbang, tapi ga ada jawaban (CORS / Ngrok Mati)
+        console.log("Gagal Nembus Server/CORS:", error.message);
+      } else {
+        console.log("Error Aneh:", error.message);
+      }
+      Alert.alert("Gagal", "Gagal menghubungi server bro!");
     }
   };
 

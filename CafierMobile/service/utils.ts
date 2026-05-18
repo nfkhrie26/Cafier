@@ -1,17 +1,18 @@
 import axios from 'axios';
 import { router } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+// import * as SecureStore from 'expo-secure-store';
+import { getItemAsync, deleteItemAsync } from './storage';
 
-export const IMAGE_BASE_URL = 'https://posttetanic-latanya-unemanative.ngrok-free.dev/storage/';
+export const IMAGE_BASE_URL = 'https://trinity-milliary-mitzie.ngrok-free.dev/storage/';
 
 // 1. Bikin instance (kurir khusus buat Cafier)
 const api = axios.create({
   // SKEPTIS ALERT: Pastiin IP lu belom ganti ya!
-  baseURL: 'https://posttetanic-latanya-unemanative.ngrok-free.dev/api', 
+  baseURL: 'https://trinity-milliary-mitzie.ngrok-free.dev/api', 
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
-    "ngrok-skip-browser-warning": "69420", // Ditaruh sini biar otomatis dipake di semua request
+    "ngrok-skip-browser-warning": "69420",
   },
 });
 
@@ -19,7 +20,8 @@ const api = axios.create({
 // Sebelum data dikirim ke Laravel, selipin token di dalem jaket kurirnya
 api.interceptors.request.use(
   async (config) => {
-    const token = await SecureStore.getItemAsync("userToken");
+    // const token = await SecureStore.getItemAsync("userToken"); // hp
+    const token = await getItemAsync("userToken"); // browser dekstop
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -41,7 +43,8 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       console.log("Token mati bro, auto-logout!");
       // Hapus sisa token di brankas
-      await SecureStore.deleteItemAsync("userToken");
+      // await SecureStore.deleteItemAsync("userToken"); // hp 
+      await deleteItemAsync("userToken"); // browser desktop
       // Tendang balik ke halaman login
       router.replace("/(auth)/login");
     }
