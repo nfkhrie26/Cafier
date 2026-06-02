@@ -30,8 +30,4 @@ Route::get('/dashboard', function () {
     return redirect('http://127.0.0.1:8001/dashboard');
 });
 
-// RUTE API (Untuk Aplikasi Mobile)
-Route::apiResource('categories', CategoryController::class);
-Route::apiResource('products', ProductController::class);
-Route::apiResource('orders', OrderController::class);
-Route::apiResource('transactions', TransactionController::class);
+// Kosong karena sisa rute API (Mobile) sudah di-handle di routes/api.php

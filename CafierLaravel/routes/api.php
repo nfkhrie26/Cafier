@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\api\BaristaOrderController;
+use App\Http\Controllers\ApiMobile\BaristaOrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController as ApiAuth;
-use App\Http\Controllers\Api\CheckoutController as Checkout;    
-use App\Http\Controllers\Api\CategoryController;  
-use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\ApiMobile\AuthController as ApiAuth;
+use App\Http\Controllers\ApiMobile\CheckoutController as Checkout;    
+use App\Http\Controllers\ApiMobile\CategoryController;  
+use App\Http\Controllers\ApiMobile\ProductController;
 use App\Http\Controllers\OrderController; 
 
 use App\Http\Controllers\ApiWeb\AuthController;

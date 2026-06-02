@@ -1,6 +1,6 @@
 import HeaderLogo from '@/components/header-logo';
 import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
+import api from '@/service/utils';
 import { Stack, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import React, { useState } from 'react';
@@ -40,7 +40,7 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-      const response = await axios.post('https://posttetanic-latanya-unemanative.ngrok-free.dev/api/register', {
+      const response = await api.post('/register', {
         name, email, password, dob, 
       });
       const token = response.data.token;
