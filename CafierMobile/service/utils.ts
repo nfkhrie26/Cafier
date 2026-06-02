@@ -8,7 +8,7 @@ export const IMAGE_BASE_URL = 'https://trinity-milliary-mitzie.ngrok-free.dev/st
 // 1. Bikin instance (kurir khusus buat Cafier)
 const api = axios.create({
   // SKEPTIS ALERT: Pastiin IP lu belom ganti ya!
-  baseURL: 'https://trinity-milliary-mitzie.ngrok-free.dev/ApiMobile', 
+  baseURL: 'https://trinity-milliary-mitzie.ngrok-free.dev/api', 
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
