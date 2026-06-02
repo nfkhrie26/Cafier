@@ -9,7 +9,7 @@ use App\Models\Transaction;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // 1. NGITUNG DATA KARTU ATAS
         // 🚨 Nanti lu buka comment ini dan sesuaikan sama nama Model DB lu
@@ -44,16 +44,22 @@ class DashboardController extends Controller
             ]
         ];
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'stats' => [
-                    'menu' => $totalMenu,
-                    'karyawan' => $totalKaryawan,
-                    'membership' => $totalMembership
-                ],
-                'chart_data' => $chartData
-            ]
-        ]);
+        // 🚨 TAMBAHAN: Kalau yang minta data itu API / Mobile, kirim JSON kayak awal
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'stats' => [
+                        'menu' => $totalMenu,
+                        'karyawan' => $totalKaryawan,
+                        'membership' => $totalMembership
+                    ],
+                    'chart_data' => $chartData
+                ]
+            ]);
+        }
+
+        // 🚨 TAMBAHAN: Kalau yang buka itu browser Web, tampilin file Blade-nya!
+        return view('dashboard', compact('totalMenu', 'totalKaryawan', 'totalMembership', 'chartData'));
     }
 }

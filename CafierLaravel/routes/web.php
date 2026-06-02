@@ -7,7 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\KeuanganController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ApiWeb\DashboardController;
 
 // RUTE OTENTIKASI (LOGIN & PASSWORD)
 Route::get('/', function () {
