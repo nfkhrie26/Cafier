@@ -15,8 +15,9 @@ export default function OrderHistory() {
     useCallback(() => {
       let isActive = true;
 
-      const fetchHistory = async () => {
-        setLoading(true);
+      // 🚨 TAMBAHAN: Dikasih fitur background reload biar nggak muter-muter terus
+      const fetchHistory = async (isBackground = false) => {
+        if (!isBackground) setLoading(true);
         try {
           const response = await api.get('/history');
           if (isActive) {
@@ -26,14 +27,21 @@ export default function OrderHistory() {
         } catch (error) {
           console.error("Gagal load history:", error);
         } finally {
-          if (isActive) setLoading(false);
+          if (isActive && !isBackground) setLoading(false);
         }
       };
 
+      // 1. Tarik pertama kali
       fetchHistory();
+
+      // 🚨 2. Auto-tarik tiap 5 detik (sinkron real-time)
+      const interval = setInterval(() => {
+        if (isActive) fetchHistory(true);
+      }, 5000);
 
       return () => {
         isActive = false;
+        clearInterval(interval);
       };
     }, [])
   );
@@ -42,27 +50,27 @@ export default function OrderHistory() {
     const s = status?.toLowerCase();
     if (s === 'batal' || s === 'cancel') return '#E74C3C'; 
     if (s === 'pending') return '#F39C12'; 
-    if (s === 'diproses' || s === 'processing') return '#3498DB'; 
+    if (s === 'diproses' || s === 'processing' || s === 'processed') return '#3498DB'; 
     if (s === 'lunas' || s === 'completed' || s === 'ready' || s === 'selesai' || s === 'pickup') return '#2ECC71'; 
     return '#95A5A6'; 
+  };
+
+// 🚨 KOREKSI 2: Ganti teks di layar history jadi 'COMPLETED'
+  const getDisplayStatus = (status: string) => {
+    const s = status?.toUpperCase() || 'UNKNOWN';
+    if (s === 'COMPLETED') return 'COMPLETED'; // Tadinya silakan pick up
+    if (s === 'PROCESSED') return 'SEDANG DIBUAT';
+    if (s === 'PENDING') return 'MENUNGGU PEMBAYARAN';
+    return s;
   };
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-
       <MainHeader />
-
-      <ScrollView 
-        style={styles.scrollArea}
-        contentContainerStyle={styles.scrollContent} 
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={[styles.logoContainer, { height: 100, justifyContent: 'center', marginTop: 10, marginBottom: 20 }]}>
-          <Image 
-            source={require('@/assets/images/serene-logo-cokelat.png')} 
-            style={{ width: 250, height: 250, resizeMode: 'contain' }} 
-          />
+          <Image source={require('@/assets/images/serene-logo-cokelat.png')} style={{ width: 250, height: 250, resizeMode: 'contain' }} />
         </View>
 
         {loading ? (
@@ -82,7 +90,6 @@ export default function OrderHistory() {
 
             return (
               <View key={order._id || order.id} style={styles.orderCard}>
-                
                 <View style={styles.orderCardHeader}>
                   <Text style={styles.orderNo} numberOfLines={1}>No {order.invoice_number || order.id}</Text>
                   <Text style={styles.orderDate}>{orderDate}{"\n"}{orderTime}</Text>
@@ -91,8 +98,6 @@ export default function OrderHistory() {
                 <Text style={styles.orderLabel}>Order</Text>
 
                 {order.items && order.items.map((item: any, index: number) => {
-                  
-                  // 🚨 DETEKSI NAMA: Biar tau ini Americano atau bukan
                   const itemName = item.product?.name || item.name || '';
                   const isAmericano = itemName.toLowerCase().includes('americano');
 
@@ -112,8 +117,6 @@ export default function OrderHistory() {
 
                   return (
                     <View key={index} style={styles.itemRow}>
-                      
-                      {/* 🚨 TRIK FOTO LOKAL BERAKSI DI SINI */}
                       {isAmericano ? (
                         <Image source={require('@/assets/images/americano.png')} style={styles.itemImage} />
                       ) : finalImageUrl && finalImageUrl !== IMAGE_BASE_URL + '/' ? (
@@ -134,18 +137,15 @@ export default function OrderHistory() {
                 })}
 
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
-                  <Text style={styles.statusText}>{order.status?.toUpperCase() || 'UNKNOWN'}</Text>
+                  {/* 🚨 TRIK SULAP MANGGIL TEKS 'PICK UP' */}
+                  <Text style={styles.statusText}>{getDisplayStatus(order.status)}</Text>
                 </View>
               </View>
             );
           })
         )}
 
-        <TouchableOpacity 
-          style={styles.btnBack} 
-          onPress={() => router.push('../profile')}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.btnBack} onPress={() => router.push('../profile')} activeOpacity={0.8}>
           <Text style={styles.btnBackText}>Back to Profile</Text>
         </TouchableOpacity>
 
@@ -155,34 +155,11 @@ export default function OrderHistory() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#E5D9C6',
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingTop: 10,
-    paddingBottom: 150, 
-  },
-  logoContainer: { 
-    alignItems: 'center', 
-    justifyContent: 'center',
-  },
-  orderCard: {
-    backgroundColor: '#FFF9EF', 
-    marginHorizontal: 20,
-    marginBottom: 25,
-    borderRadius: 25,
-    padding: 20,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
+  container: { flex: 1, backgroundColor: '#E5D9C6' },
+  scrollArea: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingTop: 10, paddingBottom: 150 },
+  logoContainer: { alignItems: 'center', justifyContent: 'center' },
+  orderCard: { backgroundColor: '#FFF9EF', marginHorizontal: 20, marginBottom: 25, borderRadius: 25, padding: 20, elevation: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3 },
   orderCardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
   orderNo: { fontSize: 16, fontWeight: 'bold', color: '#33241C', flex: 1 },
   orderDate: { fontSize: 12, color: '#888', textAlign: 'right', marginLeft: 10 },
@@ -193,21 +170,8 @@ const styles = StyleSheet.create({
   itemName: { fontSize: 15, fontWeight: 'bold', color: '#603813', marginBottom: 2 },
   itemDesc: { fontSize: 11, color: '#999' },
   itemQty: { fontSize: 18, fontWeight: 'bold', color: '#33241C', marginRight: 10 },
-  statusBadge: {
-    marginTop: 15,
-    paddingVertical: 12,
-    borderRadius: 15,
-    alignItems: 'center',
-  },
+  statusBadge: { marginTop: 15, paddingVertical: 12, borderRadius: 15, alignItems: 'center' },
   statusText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
-  btnBack: {
-    backgroundColor: '#C97C3A',
-    marginHorizontal: 30,
-    marginTop: 20,
-    marginBottom: 40,
-    paddingVertical: 18,
-    borderRadius: 20,
-    alignItems: 'center',
-  },
+  btnBack: { backgroundColor: '#C97C3A', marginHorizontal: 30, marginTop: 20, marginBottom: 40, paddingVertical: 18, borderRadius: 20, alignItems: 'center' },
   btnBackText: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
 });

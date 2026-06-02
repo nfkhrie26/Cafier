@@ -1,6 +1,6 @@
 import { styles } from '@/(style)/checkout.styles';
 import { useCart } from '@/context/cart-context';
-import api from '@/service/utils';
+import api, { IMAGE_BASE_URL } from '@/service/utils'; // 🚨 IMPORT IMAGE_BASE_URL DITAMBAHKAN
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -34,7 +34,6 @@ export default function CheckoutScreen() {
   const tax = subtotal * 0.11;
   const grandTotal = subtotal + tax - discountAmount;
 
-  // 🚨 LOGIKA BARU: Deteksi apakah voucher yang dipakai itu voucher minuman gratis
   const isFreeItemVoucher = selectedVoucher && (selectedVoucher.title.toLowerCase().includes('monthly') || selectedVoucher.desc?.toLowerCase().includes('americano'));
 
   const handleCheckout = async () => {
@@ -67,7 +66,8 @@ export default function CheckoutScreen() {
         const response = await api.get(`/checkout/status/${invoiceNumber}`);
         const dataRes = response.data;
         
-        if (dataRes.status === 'lunas' || dataRes.status === 'diproses') {
+        // 🚨 UDAH DISESUAIIN SAMA BACKEND ('processed')
+        if (dataRes.status === 'lunas' || dataRes.status === 'diproses' || dataRes.status === 'processed') {
             Alert.alert('Lunas Bos! 🎉', 'Pembayaran berhasil dikonfirmasi.');
             clearCart();
             
@@ -91,9 +91,11 @@ export default function CheckoutScreen() {
     }
   };
 
+  // 🚨 KOREKSI: PINTU AJAIB BIAR MIDTRANS OTOMATIS NUTUP PAS LUNAS
   const onNavigationStateChange = (navState: any) => {
     const url = navState.url;
-    if (url.includes('cafier-app.com')) { 
+    // Cek apakah URL-nya nunjukin kalau transaksinya berhasil/lunas (Biasanya ada 'transaction_status=settlement' atau redirect ke cafier-app)
+    if (url.includes('cafier-app.com') || url.includes('transaction_status=settlement') || url.includes('transaction_status=capture')) { 
       setShowPayment(false); 
       checkStatusKeLaravel(); 
     }
@@ -108,7 +110,7 @@ export default function CheckoutScreen() {
           const response = await api.get(`/checkout/status/${invoiceNumber}`);
           const dataRes = response.data;
           
-          if (dataRes.status === 'lunas' || dataRes.status === 'diproses') {
+          if (dataRes.status === 'lunas' || dataRes.status === 'diproses' || dataRes.status === 'processed') {
             clearInterval(interval); 
             setShowPayment(false); 
             clearCart();
@@ -149,46 +151,63 @@ export default function CheckoutScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
           <Text style={styles.sectionTitle}>Pesanan Kamu</Text>
-          {cartItems.map((item) => (
-            <View key={item.id} style={styles.itemCard}>
-              <View style={styles.imageContainer}>
-                {/* 🚨 TRIK FOTO LOKAL: Cek ID minumannya, kalau free-americano langsung tembak foto lokal */}
-                <Image 
-                  source={item.id === 'free-americano-001' ? require('@/assets/images/americano.png') : { uri: item.image }} 
-                  style={styles.itemImage} 
-                />
-              </View>
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemNameText}>{item.name}</Text>
-                
-                {item.variantDetails && item.variantDetails.map((variant: any, index: number) => (
-                  <View key={index} style={{ flexDirection: 'row', marginTop: 2 }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#555' }}>{variant.title}: </Text>
-                    <Text style={{ fontSize: 12, color: '#777', marginLeft: 4 }}>{variant.name}</Text>
-                  </View>
-                ))}
-                
-                {item.notes ? <Text style={[styles.detailText, { fontStyle: 'italic', marginTop: 4 }]}>Notes : {item.notes}</Text> : null}
+          {cartItems.map((item) => {
+            // 🚨 HAPUS DUMMY: Kita benerin narik fotonya pakai IMAGE_BASE_URL aja langsung kayak di halaman lain
+            let imagePath = item.image || '';
+            let finalImageUrl = '';
 
-                {/* Harga coret kalau itemnya gratisan */}
-                {item.price === 0 ? (
-                  <Text style={[styles.itemPrice, { color: '#C87A3F' }]}>FREE</Text>
-                ) : (
-                  <Text style={styles.itemPrice}>{formatRupiah(item.price * item.qty)}</Text>
-                )}
-                
-                <View style={styles.qtyContainer}>
-                  <TouchableOpacity onPress={() => updateQty(item.id, 'minus')}>
-                    <Ionicons name="remove-circle-outline" size={24} color="#000" />
-                  </TouchableOpacity>
-                  <Text style={styles.qtyText}>{item.qty}</Text>
-                  <TouchableOpacity onPress={() => updateQty(item.id, 'plus')}>
-                    <Ionicons name="add-circle-outline" size={24} color="#000" />
-                  </TouchableOpacity>
+            if (imagePath.startsWith('http')) {
+              finalImageUrl = imagePath;
+            } else {
+              if (imagePath && !imagePath.startsWith('/')) {
+                imagePath = '/' + imagePath;
+              }
+              finalImageUrl = `${IMAGE_BASE_URL}${imagePath}`;
+            }
+
+            return (
+              <View key={item.id} style={styles.itemCard}>
+                <View style={styles.imageContainer}>
+                  {/* 🚨 RENDER FOTO ASLI */}
+                  {finalImageUrl && finalImageUrl !== IMAGE_BASE_URL + '/' ? (
+                    <Image source={{ uri: finalImageUrl }} style={styles.itemImage} />
+                  ) : (
+                    <View style={[styles.itemImage, { backgroundColor: '#EEE', justifyContent: 'center', alignItems: 'center' }]}>
+                       <Ionicons name="cafe" size={24} color="#999" />
+                    </View>
+                  )}
+                </View>
+                <View style={styles.itemDetails}>
+                  <Text style={styles.itemNameText}>{item.name}</Text>
+                  
+                  {item.variantDetails && item.variantDetails.map((variant: any, index: number) => (
+                    <View key={index} style={{ flexDirection: 'row', marginTop: 2 }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#555' }}>{variant.title}: </Text>
+                      <Text style={{ fontSize: 12, color: '#777', marginLeft: 4 }}>{variant.name}</Text>
+                    </View>
+                  ))}
+                  
+                  {item.notes ? <Text style={[styles.detailText, { fontStyle: 'italic', marginTop: 4 }]}>Notes : {item.notes}</Text> : null}
+
+                  {item.price === 0 ? (
+                    <Text style={[styles.itemPrice, { color: '#C87A3F' }]}>FREE</Text>
+                  ) : (
+                    <Text style={styles.itemPrice}>{formatRupiah(item.price * item.qty)}</Text>
+                  )}
+                  
+                  <View style={styles.qtyContainer}>
+                    <TouchableOpacity onPress={() => updateQty(item.id, 'minus')}>
+                      <Ionicons name="remove-circle-outline" size={24} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={styles.qtyText}>{item.qty}</Text>
+                    <TouchableOpacity onPress={() => updateQty(item.id, 'plus')}>
+                      <Ionicons name="add-circle-outline" size={24} color="#000" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
 
           <Text style={styles.sectionTitle}>Voucher Diskon</Text>
           <TouchableOpacity 
@@ -204,7 +223,6 @@ export default function CheckoutScreen() {
                   {selectedVoucher ? '1 voucher berhasil dipakai' : 'Pakai voucher diskon'}
                 </Text>
                 
-                {/* 🚨 TAMPILAN DINAMIS: Kalau voucher minuman, munculin text khusus */}
                 {selectedVoucher ? (
                   isFreeItemVoucher ? (
                     <Text style={[styles.discountDetailText, { color: '#C87A3F', marginTop: 4, fontWeight: 'bold' }]}>
@@ -251,7 +269,6 @@ export default function CheckoutScreen() {
               <Text style={styles.summaryValue}>{formatRupiah(tax)}</Text>
             </View>
 
-            {/* 🚨 RINCIAN PEMBAYARAN DINAMIS */}
             {selectedVoucher && !isFreeItemVoucher && discountAmount > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={[styles.summaryLabel, { color: '#C87A3F' }]}>Promo ({selectedVoucher.title})</Text>
@@ -277,7 +294,6 @@ export default function CheckoutScreen() {
         </ScrollView>
       )}
 
-      {/* MODAL PEMBAYARAN MIDTRANS */}
       <Modal visible={showPayment} animationType="slide">
         <WebView
           source={{ uri: `https://app.sandbox.midtrans.com/snap/v2/vtweb/${snapToken}` }}

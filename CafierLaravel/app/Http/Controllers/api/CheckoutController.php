@@ -12,7 +12,6 @@ class CheckoutController extends Controller
 {
     protected $midtransService;
 
-    // Dependency Injection: Cara OOP masukin Service ke Controller
     public function __construct(MidtransService $midtransService)
     {
         $this->midtransService = $midtransService;
@@ -25,26 +24,39 @@ class CheckoutController extends Controller
             'items' => 'required|array'
         ]);
 
-        $user = $request->user(); // Dapet dari token Sanctum
+        $user = $request->user(); 
 
-        // 1. Simpen data pesanan ke MongoDB (Status masih 'pending')
+        // 🚨 SIASAT FOTO: Kita ubah isi items biar dipaksa narik foto dari database Produk
+        $formattedItems = [];
+        if (isset($request->items)) {
+            foreach ($request->items as $item) {
+                // Cari produk aslinya di database
+                $produk = Product::find($item['id']);
+                
+                if ($produk) {
+                    // 🚨 Selipin foto dan nama aslinya ke pesanan biar Barista bisa liat
+                    $item['image'] = $produk->image;
+                    $item['name'] = $produk->name; // Jaga-jaga biar namanya bener
+
+                    // Kurangin stok
+                    if (!is_null($produk->stock)) {
+                        $produk->decrement('stock', $item['qty']);
+                    }
+                }
+                // Masukin ke keranjang yang udah diformat rapi
+                $formattedItems[] = $item;
+            }
+        }
+
+        // 1. Simpen data pesanan ke MongoDB (Pake $formattedItems yang udah ada fotonya)
         $transaction = Transaction::create([
             'invoice_number' => 'TRX-' . time() . '-' . Str::random(5),
             'customer_id' => $user->id,
             'barista_id' => '666',
             'total_amount' => $request->total_amount,
             'status' => 'pending',
-            'items' => $request->items, // Array ini otomatis disimpen rapi di MongoDB
+            'items' => $formattedItems, // 🚨 Disimpen lengkap sama fotonya
         ]);
-
-        if (isset($request->items)) {
-            foreach ($request->items as $item) {
-                $produk = Product::find($item['id']);
-                if ($produk && !is_null($produk->stock)) {
-                    $produk->decrement('stock', $item['qty']);
-                }
-            }
-        }
 
         try {
             // 2. Suruh Service ngambil Snap Token
@@ -57,22 +69,21 @@ class CheckoutController extends Controller
                 'snap_token' => $snapToken
             ]);
         } catch (\Exception $e) {
-            // Biar lu tau persis Midtrans ngambek gara-gara apa
             return response()->json([
                 'status' => 'error', 
                 'message' => 'Gagal dapet token: ' . $e->getMessage()
             ], 500);
         }
     }
-    // Di CheckoutController.php
-   public function checkStatus($invoice_number)
+
+    public function checkStatus($invoice_number)
     {
         $statusMidtrans = \Midtrans\Transaction::status($invoice_number);
         $transaction = Transaction::where('invoice_number', $invoice_number)->first();
 
-        // 🚨 UDAH DIGANTI JADI DIPROSES
+        // 🚨 UDAH DIGANTI JADI 'processed' BIAR SINKRON SAMA IPAD BARISTA
         if ($statusMidtrans->transaction_status == 'settlement' || $statusMidtrans->transaction_status == 'capture') {
-            $transaction->update(['status' => 'diproses']);
+            $transaction->update(['status' => 'processed']); 
         }
 
         return response()->json([
@@ -101,7 +112,8 @@ class CheckoutController extends Controller
             return response()->json(['message' => 'Pesanan tidak ditemukan'], 404);
         }
 
-        if ($transaction->status === 'diproses') {
+        // 🚨 UDAH DIGANTI JADI 'processed'
+        if ($transaction->status === 'processed') {
             return response()->json(['message' => 'Udah diproses bos!']);
         }
 
@@ -110,12 +122,12 @@ class CheckoutController extends Controller
                 if ($fraudStatus == 'challenge') {
                     $transaction->update(['status' => 'pending']);
                 } else {
-                    $transaction->update(['status' => 'diproses']);
+                    $transaction->update(['status' => 'processed']); // 🚨 Diganti
                 }
             }
         } 
         else if ($transactionStatus == 'settlement') {
-            $transaction->update(['status' => 'diproses']);
+            $transaction->update(['status' => 'processed']); // 🚨 Diganti
         } 
         else if ($transactionStatus == 'pending') {
             $transaction->update(['status' => 'pending']);
@@ -134,4 +146,5 @@ class CheckoutController extends Controller
         }
 
         return response()->json(['message' => 'Laporan Webhook Sukses Diproses']);
-    }}
+    }
+}

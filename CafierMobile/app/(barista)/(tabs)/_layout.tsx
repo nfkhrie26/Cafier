@@ -1,20 +1,16 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Slot, usePathname, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-// import { deleteItemAsync } from '@/service/storage'; // Helper bunglon lu
 import * as SecureStore from "expo-secure-store";
 
 export default function BaristaTabLayout() {
   const router = useRouter();
-  const pathname = usePathname(); // CCTV buat mantau posisi page sekarang
+  const pathname = usePathname(); 
 
   const handleLogout = async () => {
-    await SecureStore.deleteItemAsync("userToken"); // hp
+    await SecureStore.deleteItemAsync("userToken"); 
     await SecureStore.deleteItemAsync("userRole");
-
-    // await deleteItemAsync("userToken"); // pc
-    // await deleteItemAsync("userRole");
     router.replace('/(auth)/login');
   };
 
@@ -23,24 +19,34 @@ export default function BaristaTabLayout() {
       
       {/* ================= BARIS 1: HEADER COKLAT TUA ================= */}
       <View style={styles.headerRow}>
-        <View style={styles.logoSection}>
-          <Ionicons name="leaf" size={24} color="#FFF" />
-          <Text style={styles.logoText}>SERENE</Text>
+        
+        {/* Kiri - Logo (Flex 1) */}
+        <View style={styles.leftSection}>
+          <Image 
+            source={require('../../../assets/images/logo.png')} 
+            style={styles.logoImage} 
+          />
         </View>
 
-        <Text style={styles.welcomeText}>Welcome back Barista</Text>
+        {/* Tengah - Welcome Text (Flex 2 biar di tengah persis) */}
+        <View style={styles.centerSection}>
+          <Text style={styles.welcomeText}>Welcome back Barista</Text>
+        </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={18} color="#FFF" />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        {/* Kanan - Tombol Logout (Flex 1 biar seimbang sama kiri) */}
+        <View style={styles.rightSection}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={18} color="#FFF" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+        
       </View>
 
       {/* ================= BARIS 2: NAVBAR KAPSUL TENGAH ================= */}
       <View style={styles.navbarWrapper}>
         <View style={styles.pillContainer}>
           
-          {/* Tombol Home / Dashboard */}
           <TouchableOpacity 
             style={[styles.pillItem, pathname.includes('dashboard') && styles.pillItemActive]}
             onPress={() => router.replace('/dashboard')}
@@ -48,7 +54,6 @@ export default function BaristaTabLayout() {
             <Text style={[styles.pillText, pathname.includes('dashboard') && styles.pillTextActive]}>Home</Text>
           </TouchableOpacity>
 
-          {/* Tombol Status Pemesanan */}
           <TouchableOpacity 
             style={[styles.pillItem, pathname.includes('OrdersTab') && styles.pillItemActive]}
             onPress={() => router.replace('/OrdersTab')}
@@ -56,7 +61,6 @@ export default function BaristaTabLayout() {
             <Text style={[styles.pillText, pathname.includes('status') && styles.pillTextActive]}>Status Pemesanan</Text>
           </TouchableOpacity>
 
-          {/* Tombol Notifikasi Pembayaran */}
           <TouchableOpacity 
             style={[styles.pillItem, pathname.includes('PaymentTab') && styles.pillItemActive]}
             onPress={() => router.replace('./PaymentTab')}
@@ -68,7 +72,6 @@ export default function BaristaTabLayout() {
       </View>
 
       {/* ================= BARIS 3: LUBANG KONTEN LUAR ================= */}
-      {/* File dashboard.tsx, status.tsx, dll bakal nongol di dalam sini */}
       <View style={styles.contentArea}>
         <Slot />
       </View>
@@ -82,22 +85,59 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#EBE3D5',
   },
+  
   // Styling Baris Atas (Coklat)
   headerRow: {
     flexDirection: 'row',
     backgroundColor: '#3E2A1D',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 12,
   },
-  logoSection: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  logoText: { color: '#FFF', fontWeight: 'bold', marginLeft: 8, fontSize: 16 },
-  welcomeText: { color: '#FFF', fontSize: 20, flex: 2, textAlign: 'center' },
+  
+  // 🚨 SISTEM 1-2-1 BIAR SENTRUM
+  leftSection: { 
+    flex: 1, 
+    alignItems: 'flex-start',
+    justifyContent: 'center', 
+  },
+  centerSection: { 
+    flex: 2, 
+    alignItems: 'center' 
+  },
+  rightSection: { 
+    flex: 1, 
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+
+  // 🚨 UKURAN LOGO MAX 
+  logoImage: { 
+    width: 180, // Udah dibikin jauh lebih lebar
+    height: 55, // Tingginya disesuaikan biar gak gepeng
+    resizeMode: 'contain',
+  },
+  
+  welcomeText: { 
+    color: '#FFF', 
+    fontSize: 20,
+    fontWeight: 'bold', // Sengaja aku tebelin dikit biar seimbang sama logonya
+  },
+  
   logoutButton: {
-    flexDirection: 'row', backgroundColor: '#E53935', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, alignItems: 'center'
+    flexDirection: 'row', 
+    backgroundColor: '#E53935', 
+    paddingVertical: 8, 
+    paddingHorizontal: 15, 
+    borderRadius: 20, 
+    alignItems: 'center'
   },
-  logoutText: { color: '#FFF', fontWeight: 'bold', marginLeft: 5, fontSize: 12 },
+  logoutText: { 
+    color: '#FFF', 
+    fontWeight: 'bold', 
+    marginLeft: 5, 
+    fontSize: 14 
+  },
 
   // Styling Kapsul Tengah
   navbarWrapper: {
@@ -107,11 +147,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#EBE3D5',
     zIndex: 10,
   },
-  pillContainer: { flexDirection: 'row', backgroundColor: '#A88B7D', borderRadius: 30, padding: 4 },
-  pillItem: { paddingVertical: 8, paddingHorizontal: 20, borderRadius: 25 },
-  pillItemActive: { backgroundColor: '#3E2A1D' },
-  pillText: { color: '#FFF', fontSize: 14 },
-  pillTextActive: { fontWeight: 'bold' },
+  pillContainer: { 
+    flexDirection: 'row', 
+    backgroundColor: '#A88B7D', 
+    borderRadius: 30, 
+    padding: 4 
+  },
+  pillItem: { 
+    paddingVertical: 8, 
+    paddingHorizontal: 20, 
+    borderRadius: 25 
+  },
+  pillItemActive: { 
+    backgroundColor: '#3E2A1D' 
+  },
+  pillText: { 
+    color: '#FFF', 
+    fontSize: 14 
+  },
+  pillTextActive: { 
+    fontWeight: 'bold' 
+  },
 
   // Area Halaman Utama
   contentArea: {

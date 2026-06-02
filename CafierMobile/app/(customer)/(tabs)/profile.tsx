@@ -1,7 +1,6 @@
-import React, { useCallback, useState } from "react"; // 🚨 Tambahin useCallback
+import React, { useCallback, useState } from "react"; 
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIndicator } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router"; // 🚨 Tambahin useFocusEffect
-// import * as SecureStore from "expo-secure-store";
+import { useFocusEffect, useRouter } from "expo-router"; 
 import { setItemAsync, getItemAsync, deleteItemAsync } from '@/service/storage';
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient"; 
@@ -17,13 +16,12 @@ export default function ProfileScreen() {
   const TARGET_GOLD = 31; 
   const TARGET_PLATINUM = 81; 
 
-  // 🚨 GANTI useEffect JADI useFocusEffect
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
 
       const fetchPointsFromHistory = async () => {
-        setLoading(true); // Biar muter dulu pas lagi ngitung
+        setLoading(true); 
         try {
           const response = await api.get('/history');
           if (!isActive) return;
@@ -41,9 +39,9 @@ export default function ProfileScreen() {
 
                 let pts = 2; 
                 if (combinedText.includes('large')) {
-                  pts = 6;
+                  pts = 5;
                 } else if (combinedText.includes('regular') || combinedText.includes('normal')) {
-                  pts = 4;
+                  pts = 3;
                 } else {
                   pts = 2;
                 }
@@ -69,16 +67,14 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     try {
-      // const token = await SecureStore.getItemAsync("userToken"); // hp
-      const token = await getItemAsync("userToken"); // desktop
+      const token = await getItemAsync("userToken"); 
       await api.post("/logout", {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (e) {
       console.log("Logout error skipped");
     } finally {
-      // await SecureStore.deleteItemAsync("userToken"); // hp
-      await deleteItemAsync("userToken"); // desktop
+      await deleteItemAsync("userToken"); 
       router.replace("../../../(auth)/login");
     }
   };
@@ -190,38 +186,82 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#EDE3D3" },
-  scrollArea: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingBottom: 150, paddingTop: 10 },
-  logoContainer: { alignItems: "center", justifyContent: "center", height: 150, marginTop: 10, marginBottom: 20 },
-  card: {
-    marginHorizontal: 20,
-    borderRadius: 18,
-    padding: 20,
+  container: { 
+    flex: 1, 
+    backgroundColor: "#EDE3D3" 
+  },
+  scrollArea: { 
+    flex: 1 
+  },
+  scrollContent: { 
+    flexGrow: 1, 
+    paddingBottom: 150, 
+    paddingTop: 10 
+  },
+  logoContainer: { 
+    alignItems: "center", 
+    justifyContent: "center", 
+    height: 150, 
+    marginTop: 10, 
+    marginBottom: 20 
+  },
+  card: { 
+    marginHorizontal: 20, 
+    borderRadius: 18, 
+    padding: 20, 
     height: 140, 
-    justifyContent: 'center',
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 5,
+    justifyContent: 'center', 
+    shadowColor: "#000", 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowOpacity: 0.15, 
+    shadowRadius: 5, 
+    elevation: 5 
   },
-  cardTitle: { fontSize: 22, fontWeight: "bold" },
-  cardSub: { marginTop: 4, fontSize: 13, marginBottom: 20 },
-  progressBarBg: { height: 6, borderRadius: 4, width: '100%', marginBottom: 12 },
-  progressFill: { height: "100%", borderRadius: 4 },
-  cardFooter: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center" },
-  benefit: { marginRight: 4, fontSize: 12 },
-  menuContainer: { marginTop: 25, paddingHorizontal: 20 },
-  menuBtn: {
-    backgroundColor: "#C7772F",
+  cardTitle: { 
+    fontSize: 22, 
+    fontWeight: "bold" 
+  },
+  cardSub: { 
+    marginTop: 4, 
+    fontSize: 13, 
+    marginBottom: 20 
+  },
+  progressBarBg: { 
+    height: 6, 
+    borderRadius: 4, 
+    width: '100%', 
+    marginBottom: 12 
+  },
+  progressFill: { 
+    height: "100%", 
+    borderRadius: 4 
+  },
+  cardFooter: { 
+    flexDirection: "row", 
+    justifyContent: "flex-end", 
+    alignItems: "center" 
+  },
+  benefit: { 
+    marginRight: 4, 
+    fontSize: 12 
+  },
+  menuContainer: { 
+    marginTop: 25, 
+    paddingHorizontal: 20 
+  },
+  menuBtn: { 
+    backgroundColor: "#C7772F", 
     borderRadius: 15, 
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15
+    paddingVertical: 18, 
+    paddingHorizontal: 20, 
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    alignItems: "center", 
+    marginBottom: 15 
   },
-  menuText: { color: "#fff", fontSize: 15, fontWeight: "bold" },
+  menuText: { 
+    color: "#fff", 
+    fontSize: 15, 
+    fontWeight: "bold" 
+  },
 });

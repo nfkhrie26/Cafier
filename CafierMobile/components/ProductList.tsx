@@ -8,7 +8,7 @@ import {
   Text,
   TouchableOpacity,
   View,
-  ScrollView, // 🚨 IMPORT SCROLLVIEW DI SINI
+  ScrollView, 
 } from "react-native";
 
 const { width } = Dimensions.get("window");
@@ -48,14 +48,12 @@ export default function ProductList({
   const isGrid = numColumns > 1;
 
   return (
-    // 🚨 UBAH VIEW JADI SCROLLVIEW
-    // contentContainerStyle dipake buat flexWrap kalau mode Grid
     <ScrollView 
       showsVerticalScrollIndicator={false}
       style={styles.container}
       contentContainerStyle={[
         isGrid && styles.gridWrapper,
-        { paddingBottom: 100 } // 🚨 Jaga-jaga biar bawahnya nggak kepotong navbar
+        { paddingBottom: 100 } 
       ]}
     >
       {filteredData.map((product, index) => {
@@ -99,7 +97,7 @@ export default function ProductList({
                 style={isGrid ? styles.productImageGrid : styles.productImage}
               />
               {!isTersedia && (
-                <View style={styles.overlayHabis}>
+                <View style={isGrid ? styles.overlayHabisGrid : styles.overlayHabisList}>
                   <Text style={styles.textHabis}>{pesanHabis}</Text>
                 </View>
               )}
@@ -148,7 +146,7 @@ export default function ProductList({
 
 const styles = StyleSheet.create({
   container: { 
-    flex: 1, // 🚨 Wajib biar ScrollView ngisi penuh wadahnya
+    flex: 1, 
     width: "100%" 
   },
   gridWrapper: {
@@ -168,8 +166,9 @@ const styles = StyleSheet.create({
   productImage: { width: 60, height: 60, borderRadius: 10 },
   productImageGrid: { width: "100%", height: 120, borderRadius: 10 },
 
-  imageWrapperList: { width: 60, height: 60 },
-  imageWrapperGrid: { width: "100%", height: 120 },
+  // 🚨 KOREKSI: Tambahin justify & align items biar konten di dalamnya ngumpul di tengah
+  imageWrapperList: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center' },
+  imageWrapperGrid: { width: "100%", height: 120, justifyContent: 'center', alignItems: 'center' },
 
   productInfo: { flex: 1, marginLeft: 10 },
   productName: { fontSize: 14, fontWeight: "bold", color: "#000" },
@@ -179,14 +178,26 @@ const styles = StyleSheet.create({
   notFoundContainer: { padding: 20, alignItems: "center" },
   notFoundText: { color: "#888" },
 
-  overlayHabis: {
-    ...StyleSheet.absoluteFillObject,
+  // 🚨 KOREKSI: Bikin 2 jenis overlay (Grid & List) yang numpuk pas di atas gambar
+  overlayHabisList: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
-  textHabis: { color: "white", fontSize: 10, fontWeight: "bold" },
+  overlayHabisGrid: {
+    position: 'absolute',
+    width: "100%",
+    height: 120,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  textHabis: { color: "white", fontSize: 10, fontWeight: "bold", textAlign: 'center' },
   stockText: {
     fontSize: 11,
     color: "#C87A3F",

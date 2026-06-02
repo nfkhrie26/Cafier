@@ -1,23 +1,21 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router'; // 🚨 Tambahin useFocusEffect
-import React, { useCallback, useState } from 'react'; // 🚨 Tambahin useCallback & useState
-import { Image, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native'; // 🚨 Tambahin ActivityIndicator
+import { useFocusEffect, useRouter } from 'expo-router'; 
+import React, { useCallback, useState } from 'react'; 
+import { Image, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native'; 
 import { useVouchers } from '@/context/voucher-context';
-import api from '@/service/utils'; // 🚨 Import API buat narik data
-import MainHeader from '@/components/main-header'; // 🚨 Panggil MainHeader jagoan kita
+import api from '@/service/utils'; 
+import MainHeader from '@/components/main-header'; 
 
 export default function BenefitsScreen() {
   const router = useRouter();
   const { claimVoucher, claimedVoucherIds, availableVouchers } = useVouchers();
 
-  // 🚨 State buat nampung poin dan status loading
   const [totalPoints, setTotalPoints] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const TARGET_GOLD = 31; 
   const TARGET_PLATINUM = 81; 
 
-  // 🚨 Tarik data poin setiap kali halaman ini dibuka
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -39,6 +37,7 @@ export default function BenefitsScreen() {
                 const variantNames = item.variantDetails ? item.variantDetails.map((v: any) => v.name.toLowerCase()).join(' ') : '';
                 const combinedText = `${notes} ${variantNames} ${item.name?.toLowerCase()}`;
 
+                // 🚨 KEMBALI KE ASAL: Large 5, Regular 3
                 let pts = 2; 
                 if (combinedText.includes('large')) {
                   pts = 5;
@@ -67,7 +66,6 @@ export default function BenefitsScreen() {
     }, [])
   );
 
-  // 🚨 Logika Tier dan Warna yang sama persis kayak Profile
   let currentTier = 'Silver';
   let pointsAway = 0;
   let nextTier = 'Gold';
@@ -108,8 +106,6 @@ export default function BenefitsScreen() {
 
   return (
     <View style={styles.container}>
-      
-      {/* 🚨 Panggil MainHeader biar fotonya sinkron! */}
       <MainHeader />
 
       <ScrollView 
@@ -207,20 +203,7 @@ const styles = StyleSheet.create({
   scrollArea: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingTop: 10, paddingBottom: 150 },
   logoContainer: { alignItems: 'center', justifyContent: 'center' },
-  card: {
-    marginHorizontal: 20,
-    borderRadius: 20,
-    padding: 22,
-    paddingBottom: 30, 
-    marginBottom: 35,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    justifyContent: 'center',
-    height: 140, // Disamakan tingginya dengan Profile Screen biar konsisten
-  },
+  card: { marginHorizontal: 20, borderRadius: 20, padding: 22, paddingBottom: 30, marginBottom: 35, elevation: 5, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 5, justifyContent: 'center', height: 140 },
   cardTitle: { fontSize: 24, fontWeight: "bold" },
   cardSub: { marginTop: 6, fontSize: 13, marginBottom: 25 },
   progressBarBg: { height: 8, borderRadius: 4, width: '100%' },

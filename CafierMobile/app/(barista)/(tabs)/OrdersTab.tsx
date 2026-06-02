@@ -1,91 +1,120 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Image, ActivityIndicator } from 'react-native'; 
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Image, ActivityIndicator, ScrollView } from 'react-native'; 
 import { Ionicons } from '@expo/vector-icons';
-import api, { IMAGE_BASE_URL } from '@/service/utils';
+import api, { IMAGE_BASE_URL } from '@/service/utils'; 
 
 export default function OrdersTab() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null); 
   const [isLoading, setIsLoading] = useState(true);
-  // 🚨 KASIH NILAI AWAL ARRAY KOSONG [] BIAR GAK UNDEFINED
   const [orders, setOrders] = useState<any[]>([]);
 
+  // 🚨 Dikasih mode isBackground biar layarnya ga kedip-kedip pas auto-refresh
+  const fetchData = async (isBackground = false) => {
+    if (!isBackground) setIsLoading(true);
+    try {
+      const response = await api.get('/barista/orders');
+      setOrders(response.data.data);
+    } catch (e) {
+      console.error("Gagal tarik data pesanan:", e);
+    } finally {
+      if (!isBackground) setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get('/barista/orders');
-        // Pastiin response.data.data ini beneran isinya array pesanan dari Laravel lu
-        setOrders(response.data.data);
-      } catch (e) {
-        console.error("Gagal tarik data Cafier:", e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // 1. Tarik data pas pertama kali buka tab
     fetchData();
+
+    // 2. Alarm auto-refresh tiap 5 detik (Biar orderan baru otomatis masuk pas lunas)
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  const handleChangeStatus = (orderId: string, newStatus: string) => {
-    setOrders(prevOrders => prevOrders.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
+  const handleChangeStatus = async (orderId: string, newStatus: string) => {
     setSelectedOrder(null); 
-  }; // 🚨 INI DIA TUTUP KURUNG YANG ILANG KEMAREN!
+    setOrders(prevOrders => prevOrders.map(order => 
+      order.id === orderId ? { ...order, status: newStatus } : order
+    ));
 
-  // 🚨 CEGAT PAKE LOADING BIAR GAK NGE-MAP DATA KOSONG
+    try {
+      await api.put(`/barista/orders/${orderId}`, {
+        status: newStatus
+      });
+    } catch (error) {
+      console.error("Gagal update status pesanan:", error);
+      alert("Gagal nyimpen status ke database!");
+      fetchData(); 
+    }
+  };
+
+  // 🚨 SATPAM PENYARING: Sembunyiin semua orderan yang statusnya masih 'pending'
+  const activeOrders = orders.filter((order) => {
+    const s = (order.status || '').toLowerCase();
+    return s !== 'pending'; 
+  });
+
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 }}>
         <ActivityIndicator size="large" color="#422918" />
-        <Text style={{ marginTop: 10, color: '#422918' }}>Narikh data pesanan...</Text>
+        <Text style={{ marginTop: 10, color: '#422918' }}>Narik data pesanan...</Text>
       </View>
     );
   }
 
-  // Kalo data kosong dari sananya (ga ada pesanan)
-  if (!orders || orders.length === 0) {
+  // 🚨 Ngeceknya ke activeOrders sekarang, bukan ke orders mentah
+  if (!activeOrders || activeOrders.length === 0) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 }}>
-        <Text style={{ fontSize: 16, color: '#7f8c8d' }}>Belum ada pesanan masuk nih bro.</Text>
+        <Text style={{ fontSize: 16, color: '#7f8c8d' }}>Belum ada pesanan yang udah dibayar nih bro.</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.gridContainer}>
-      {orders.map((order) => (
-        <TouchableOpacity key={order.id} style={styles.orderCard} activeOpacity={0.7} onPress={() => setSelectedOrder(order)}>
-          <View style={styles.orderCardHeader}>
-            <Text style={styles.orderNumber}>Order No {order.id}</Text>
-            {/* Hati-hati: pastiin order.date & order.time beneran ada di json dari Laravel lu */}
-            <Text style={styles.orderDate}>{order.date}{'\n'}{order.time}</Text>
-          </View>
-          
-          {/* Hati-hati: pastiin order.items ini berbentuk array di json dari Laravel lu */}
-          {order.items && order.items.map((item: any) => (
-            <View key={item.id} style={styles.orderItemRow}>
+    <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+      <View style={styles.gridContainer}>
+        {activeOrders.map((order) => {
+          const statusLower = (order.status || '').toLowerCase();
+          let cardStatusColor = '#FDCB2C'; // Default kuning (Processed)
+          if (statusLower === 'pickup') cardStatusColor = '#3498DB'; // Biru (Pick Up)
+          if (statusLower === 'completed') cardStatusColor = '#2ecc71'; // Hijau (Completed)
+
+          return (
+            <TouchableOpacity key={order.id} style={styles.orderCard} activeOpacity={0.7} onPress={() => setSelectedOrder(order)}>
+              <View style={styles.orderCardHeader}>
+                <Text style={styles.orderNumber}>Order No {order.id}</Text>
+                <Text style={styles.orderDate}>{order.date}{'\n'}{order.time}</Text>
+              </View>
               
-              <View style={styles.itemImagePlaceholder}>
-                {item.image ? (
-                   // Pake URL gambar lu kalo emang dari API ngirim nama file
-                   <Image source={{ uri: `${IMAGE_BASE_URL}${item.image}` }} style={styles.itemImage} />
-                ) : (
-                   <Ionicons name="cafe" size={24} color="#A08069" />
-                )}
+              {order.items && order.items.map((item: any) => (
+                <View key={item.id} style={styles.orderItemRow}>
+                  <View style={styles.itemImagePlaceholder}>
+                    {item.image ? (
+                       <Image source={{ uri: `${IMAGE_BASE_URL}${item.image}` }} style={styles.itemImage} />
+                    ) : (
+                       <Ionicons name="cafe" size={24} color="#A08069" />
+                    )}
+                  </View>
+                  <View style={styles.itemDetails}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemDesc}>{item.desc}</Text>
+                  </View>
+                  <Text style={styles.itemQty}>x{item.qty}</Text>
+                </View>
+              ))}
+              
+              <View style={[styles.statusButton, { backgroundColor: cardStatusColor }]}>
+                <Text style={[styles.statusButtonText, { textTransform: 'capitalize' }]}>{order.status}</Text>
               </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemDesc}>{item.desc}</Text>
-              </View>
-              <Text style={styles.itemQty}>x{item.qty}</Text>
-            </View>
-          ))}
-          
-          <View style={[styles.statusButton, { backgroundColor: order.status === 'Completed' ? '#2ecc71' : '#FDCB2C' }]}>
-            <Text style={styles.statusButtonText}>{order.status}</Text>
-          </View>
-        </TouchableOpacity>
-      ))}
-
-      {/* MODAL GANTI STATUS */}
       <Modal animationType="fade" transparent={true} visible={selectedOrder !== null} onRequestClose={() => setSelectedOrder(null)}>
         <View style={styles.modalOverlay}>
           {selectedOrder && (
@@ -97,7 +126,6 @@ export default function OrdersTab() {
               <View style={{ marginVertical: 20 }}>
                 {selectedOrder.items && selectedOrder.items.map((item: any) => (
                   <View key={item.id} style={styles.orderItemRow}>
-                    
                     <View style={styles.itemImagePlaceholder}>
                       {item.image ? (
                         <Image source={{ uri: `${IMAGE_BASE_URL}${item.image}` }} style={styles.itemImage} />
@@ -105,7 +133,6 @@ export default function OrdersTab() {
                         <Ionicons name="cafe" size={24} color="#A08069" />
                       )}
                     </View>
-
                     <View style={styles.itemDetails}>
                       <Text style={styles.itemName}>{item.name}</Text>
                       <Text style={styles.itemDesc}>{item.desc}</Text>
@@ -114,12 +141,17 @@ export default function OrdersTab() {
                   </View>
                 ))}
               </View>
+
               <Text style={styles.modalTitle}>Change status</Text>
+              
               <View style={styles.modalActions}>
-                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#FDCB2C' }]} onPress={() => handleChangeStatus(selectedOrder.id, 'Processed')}>
+                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#FDCB2C' }]} onPress={() => handleChangeStatus(selectedOrder.id, 'processed')}>
                   <Text style={styles.modalBtnText}>Processed</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#2ecc71' }]} onPress={() => handleChangeStatus(selectedOrder.id, 'Completed')}>
+                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#3498DB' }]} onPress={() => handleChangeStatus(selectedOrder.id, 'pickup')}>
+                  <Text style={styles.modalBtnText}>Pick Up</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#2ecc71' }]} onPress={() => handleChangeStatus(selectedOrder.id, 'completed')}>
                   <Text style={styles.modalBtnText}>Completed</Text>
                 </TouchableOpacity>
               </View>
@@ -128,12 +160,12 @@ export default function OrdersTab() {
           )}
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 
-// ... (STYLING LU TETEP SAMA KAYAK SEBELUMNYA, GA ADA YANG GUA UBAH)
 const styles = StyleSheet.create({
+  scrollContainer: { padding: 20, paddingBottom: 50 },
   gridContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 30, width: '100%' },
   orderCard: { backgroundColor: '#FDF8E4', borderRadius: 20, padding: 25, width: 350, elevation: 3 },
   orderCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
@@ -151,8 +183,8 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { backgroundColor: '#FDF8E4', width: 450, borderRadius: 20, padding: 30, elevation: 10 },
   modalTitle: { fontSize: 22, fontWeight: 'bold', color: '#000', textAlign: 'center', marginBottom: 25 },
-  modalActions: { flexDirection: 'row', justifyContent: 'space-between', gap: 15 },
-  modalBtn: { flex: 1, paddingVertical: 15, borderRadius: 30, alignItems: 'center' },
-  modalBtnText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  modalActions: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
+  modalBtn: { flex: 1, paddingVertical: 15, borderRadius: 15, alignItems: 'center' },
+  modalBtnText: { color: '#FFF', fontSize: 14, fontWeight: 'bold' }, 
   modalCloseArea: { position: 'absolute', top: -1000, bottom: -1000, left: -1000, right: -1000, zIndex: -1 }
 });

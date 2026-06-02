@@ -2,8 +2,8 @@
 import ProductList from '@/components/ProductList';
 import api, { IMAGE_BASE_URL } from '@/service/utils';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { Stack, useFocusEffect } from 'expo-router'; 
+import React, { useCallback, useState } from 'react'; 
 import { ActivityIndicator, Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { styles } from '../../../(style)/menu.styles';
 
@@ -14,31 +14,45 @@ export default function MenuScreen() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [catRes, prodRes] = await Promise.all([
-          api.get('/categories'),
-          api.get('/products')
-        ]);
-        setCategories(catRes.data.data);
-        setAllProducts(prodRes.data.data);
-      } catch (e) {
-        console.error("Gagal tarik data Cafier:", e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const fetchData = async () => {
+        try {
+          const [catRes, prodRes] = await Promise.all([
+            api.get('/categories'),
+            api.get('/products')
+          ]);
+          
+          if (isActive) {
+            setCategories(catRes.data.data);
+            setAllProducts(prodRes.data.data);
+          }
+        } catch (e) {
+          console.error("Gagal tarik data Cafier:", e);
+        } finally {
+          if (isActive) setIsLoading(false);
+        }
+      };
+      
+      fetchData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   const renderContent = () => {
     if (isLoading) return <ActivityIndicator size="large" color="#D4C4A8" style={{ flex: 1 }} />;
     
     // Filter data berdasarkan kategori aktif
-    const currentData = allProducts.filter((item: any) => item.category?.name === activeCategory);
+    let currentData = allProducts.filter((item: any) => item.category?.name === activeCategory);
 
-    // 🚨 KUNCI 3: View pembungkus ini HARUS punya flex: 1
+    // 🚨 LOGIKA SORTING BARU: Langsung otomatis diurutin dari harga termurah ke termahal
+    currentData.sort((a: any, b: any) => (a.price || 0) - (b.price || 0));
+
     return (
       <View style={{ flex: 1 }}>
         <ProductList data={currentData} searchQuery={searchQuery} origin='/menu' />

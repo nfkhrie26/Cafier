@@ -45,12 +45,17 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::get('/orders/{id}', [OrderController::class, 'show']);
 });
 
+
 // ==========================================
 // 4. RUTE KHUSUS BARISTA
 // ==========================================
 Route::middleware(['auth:sanctum', 'role:barista'])->group(function () {
+    // Nampilin orderan buat barista
     Route::get('/barista/orders', [BaristaOrderController::class, 'orderShow']);
     
-    // 🚨 INI PENTING: Rute buat update toggle Siap Disajikan & Stok Habis
+    // 🚨 TAMBAHAN BARU: Rute buat ganti status orderan (Processed/Completed)
+    Route::put('/barista/orders/{id}', [BaristaOrderController::class, 'updateStatus']);
+    
+    // Rute buat update toggle Siap Disajikan & Stok Habis (Udah bener)
     Route::put('/products/{id}', [ProductController::class, 'update']);
 });

@@ -12,18 +12,24 @@ export default function OrderStatusScreen() {
   const [orderData, setOrderData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const statusSteps = ['Order\nConfirmed', 'Payment', 'Processed', 'Pickup'];
+  const statusSteps = ['Order Confirmed', 'Payment', 'Processed', 'Pickup'];
 
-  useEffect(() => {
-    fetchOrderDetails();
-  }, [id]);
-
-  const fetchOrderDetails = async () => {
-    setLoading(true);
+  const fetchOrderDetails = async (isBackground = false) => {
+    if (!isBackground) setLoading(true); 
+    
     try {
       if (id) {
         const response = await api.get(`/orders/${id}`); 
-        setOrderData(response.data.data || response.data); 
+        const fetchedOrder = response.data.data || response.data;
+        
+        // 🚨 PERBAIKAN: Kalau ditarik pakai ID tapi statusnya udah completed, tetep buang dari layar!
+        const s = fetchedOrder.status?.toLowerCase();
+        if (s === 'completed' || s === 'batal' || s === 'cancel' || s === 'selesai') {
+          setOrderData(null); 
+        } else {
+          setOrderData(fetchedOrder);
+        }
+
       } else {
         const response = await api.get('/orders');
         const allOrders = response.data.data || response.data;
@@ -31,9 +37,8 @@ export default function OrderStatusScreen() {
         if (allOrders && allOrders.length > 0) {
           const activeOrder = allOrders.find((o: any) => {
             const s = o.status?.toLowerCase();
-            return s !== 'completed' && s !== 'pickup' && s !== 'selesai' && s !== 'ready';
+            return s !== 'completed' && s !== 'batal' && s !== 'cancel' && s !== 'selesai';
           });
-
           setOrderData(activeOrder || null);
         } else {
           setOrderData(null);
@@ -42,15 +47,23 @@ export default function OrderStatusScreen() {
     } catch (error) {
       console.error("Gagal ambil data order:", error);
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchOrderDetails();
+    const interval = setInterval(() => {
+      fetchOrderDetails(true); 
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [id]);
+
   const getStatusIndex = (status: string) => {
     const s = status?.toLowerCase();
-    if (s === 'ready' || s === 'completed' || s === 'pickup' || s === 'selesai') return 3;
+    if (s === 'pickup' || s === 'ready') return 3;
     if (s === 'processing' || s === 'processed' || s === 'diproses') return 2;
-    if (s === 'paid' || s === 'lunas' || s === 'payment_success') return 1;
+    if (s === 'paid' || s === 'lunas' || s === 'payment_success' || s === 'pending') return 1;
     return 0; 
   };
 
@@ -88,27 +101,16 @@ export default function OrderStatusScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-
       <MainHeader />
-
-      <ScrollView 
-        style={styles.scrollArea}
-        contentContainerStyle={styles.scrollContent} 
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={[styles.logoContainer, { height: 100, justifyContent: 'center', marginTop: 10, marginBottom: 20 }]}>
-          <Image 
-            source={require('@/assets/images/serene-logo-cokelat.png')} 
-            style={{ width: 250, height: 250, resizeMode: 'contain' }} 
-          />
+          <Image source={require('@/assets/images/serene-logo-cokelat.png')} style={{ width: 250, height: 250, resizeMode: 'contain' }} />
         </View>
 
         <View style={styles.orderCard}>
           <View style={styles.cardHeader}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.orderNoText} numberOfLines={1}>
-                No {orderData.invoice_number || orderData.id}
-              </Text> 
+              <Text style={styles.orderNoText} numberOfLines={1}>No {orderData.invoice_number || orderData.id}</Text> 
             </View>
             <View style={{ alignItems: 'flex-end', marginLeft: 10 }}>
               <Text style={styles.dateText}>{orderDate}</Text>
@@ -117,18 +119,29 @@ export default function OrderStatusScreen() {
           </View>
 
           <View style={styles.timelineWrapper}>
-            <View style={styles.baseLine} />
-            <View style={[styles.activeLine, { width: `${progressWidth}%` }]} />
+            <View style={styles.trackContainer}>
+              <View style={styles.baseLine} />
+              <View style={[styles.activeLine, { width: `${progressWidth}%` }]} />
+            </View>
 
             <View style={styles.stepsContainer}>
               {statusSteps.map((step, index) => {
                 const isDone = index <= currentStatusIndex;
+                const isTopLabel = index % 2 !== 0; 
+
                 return (
                   <View key={index} style={styles.stepItem}>
+                    {isTopLabel && (
+                      <Text style={[styles.stepLabelTop, isDone && styles.stepLabelActive]}>
+                        {step}
+                      </Text>
+                    )}
                     <View style={[styles.circle, isDone && styles.circleActive]} />
-                    <Text style={[styles.stepLabel, isDone && styles.stepLabelActive]}>
-                      {step}
-                    </Text>
+                    {!isTopLabel && (
+                      <Text style={[styles.stepLabelBottom, isDone && styles.stepLabelActive]}>
+                        {step}
+                      </Text>
+                    )}
                   </View>
                 );
               })}
@@ -138,11 +151,7 @@ export default function OrderStatusScreen() {
           <Text style={styles.orderTitle}>Order</Text>
           <View style={styles.itemsList}>
             {orderData.items && orderData.items.map((item: any, index: number) => {
-              
               const itemName = item.product?.name || item.name || '';
-              // 🚨 DETEKSI: Apakah namanya ada unsur 'Americano'?
-              const isAmericano = itemName.toLowerCase().includes('americano');
-
               let imagePath = item.product?.image || item.image || '';
               let finalImageUrl = '';
 
@@ -157,21 +166,9 @@ export default function OrderStatusScreen() {
 
               return (
                 <View key={index} style={styles.itemRow}>
-                  {/* 🚨 TRIK RENDER GAMBAR */}
-                  {isAmericano ? (
-                    // Kalau itu Americano, paksa pakai foto lokal
-                    <Image 
-                      source={require('@/assets/images/americano.png')} 
-                      style={styles.itemImage} 
-                    />
-                  ) : finalImageUrl && finalImageUrl !== IMAGE_BASE_URL + '/' ? (
-                    // Kalau minuman lain yang ada gambarnya
-                     <Image 
-                       source={{ uri: finalImageUrl }} 
-                       style={styles.itemImage} 
-                     />
+                  {finalImageUrl && finalImageUrl !== IMAGE_BASE_URL + '/' ? (
+                     <Image source={{ uri: finalImageUrl }} style={styles.itemImage} />
                   ) : (
-                    // Kalau error/gak ada gambar sama sekali
                     <View style={[styles.itemImage, { backgroundColor: '#EEE', justifyContent: 'center', alignItems: 'center' }]}>
                        <Ionicons name="image-outline" size={24} color="#999" />
                     </View>
@@ -179,9 +176,7 @@ export default function OrderStatusScreen() {
                   
                   <View style={styles.itemInfo}>
                     <Text style={styles.itemName}>{itemName}</Text>
-                    <Text style={styles.itemDesc}>
-                      {item.notes || 'Normal'} 
-                    </Text>
+                    <Text style={styles.itemDesc}>{item.notes || 'Normal'}</Text>
                   </View>
                   <Text style={styles.itemQty}>{item.quantity || item.qty}x</Text>
                 </View>
@@ -204,71 +199,30 @@ const styles = StyleSheet.create({
   scrollArea: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 150, paddingTop: 10 },
   logoContainer: { alignItems: "center", justifyContent: "center" },
-  orderCard: {
-    backgroundColor: '#F7EDD5',
-    marginHorizontal: 20,
-    borderRadius: 25,
-    padding: 20,
-    paddingTop: 30,
-    elevation: 4,
-  },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 },
+  orderCard: { backgroundColor: '#F7EDD5', marginHorizontal: 20, borderRadius: 25, padding: 20, paddingTop: 30, elevation: 4 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }, 
   orderNoText: { fontSize: 16, fontWeight: 'bold', color: '#33241C' },
   dateText: { fontSize: 12, color: '#666' },
   timeText: { fontSize: 12, color: '#666' },
-  timelineWrapper: { height: 100, marginVertical: 10, position: 'relative' },
-  baseLine: {
-    position: 'absolute',
-    height: 4,
-    backgroundColor: '#FFF',
-    left: '12.5%', 
-    right: '12.5%', 
-    top: 17,
-    borderRadius: 2,
-  },
-  activeLine: {
-    position: 'absolute',
-    height: 4,
-    backgroundColor: '#C07C33',
-    left: '12.5%',
-    top: 17,
-    borderRadius: 2,
-  },
-  stepsContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-  stepItem: { width: '25%', alignItems: 'center' },
-  circle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#FFF',
-    borderWidth: 3,
-    borderColor: '#C07C33',
-    zIndex: 10, 
-  },
-  circleActive: { backgroundColor: '#C07C33' },
-  stepLabel: { fontSize: 9, color: '#999', textAlign: 'center', marginTop: 10, fontWeight: '600' },
-  stepLabelActive: { color: '#33241C', fontWeight: 'bold' },
+  timelineWrapper: { height: 100, marginVertical: 10, justifyContent: 'center' },
+  trackContainer: { position: 'absolute', left: '12.5%', right: '12.5%', top: 48, height: 6 }, 
+  baseLine: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: '#FFF', borderRadius: 3 },
+  activeLine: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: '#B2763D', borderRadius: 3 }, 
+  stepsContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', alignItems: 'center', height: '100%' },
+  stepItem: { width: '25%', alignItems: 'center', justifyContent: 'center', height: '100%' },
+  circle: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFF', zIndex: 10 },
+  circleActive: { backgroundColor: '#B2763D' },
+  stepLabelTop: { position: 'absolute', top: 5, fontSize: 10, color: '#111', textAlign: 'center', width: '150%' },
+  stepLabelBottom: { position: 'absolute', bottom: 5, fontSize: 10, color: '#111', textAlign: 'center', width: '150%' },
+  stepLabelActive: { fontWeight: 'bold' },
   orderTitle: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginVertical: 20 },
   itemsList: { gap: 12 },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 15,
-    padding: 10,
-  },
+  itemRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 15, padding: 10 },
   itemImage: { width: 50, height: 50, resizeMode: 'cover', borderRadius: 8 }, 
   itemInfo: { flex: 1, marginLeft: 12 },
   itemName: { fontSize: 14, fontWeight: 'bold', color: '#33241C' },
   itemDesc: { fontSize: 11, color: '#666' },
   itemQty: { fontSize: 16, fontWeight: 'bold', color: '#33241C' },
-  homeBtn: {
-    backgroundColor: '#C07C33',
-    marginHorizontal: 30,
-    borderRadius: 20,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginTop: 35,
-  },
+  homeBtn: { backgroundColor: '#C07C33', marginHorizontal: 30, borderRadius: 20, paddingVertical: 18, alignItems: 'center', marginTop: 35 },
   homeBtnText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
 });
