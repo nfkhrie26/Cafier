@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\KeuanganController;
+use App\Http\Controllers\DashboardController;
 
 // RUTE OTENTIKASI (LOGIN & PASSWORD)
 Route::get('/', function () {
@@ -19,9 +20,7 @@ Route::get('/forgot-password', function () {
 
 
 // RUTE DASHBOARD & HALAMAN STATIS
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('/daftar-membership', function () {
     return view('daftar-membership');

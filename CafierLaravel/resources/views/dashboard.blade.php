@@ -6,48 +6,34 @@
     <title>Dashboard Pemilik - Serene</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <!-- Tambahkan CDN Chart.js di sini -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="m-0 p-0 bg-[#e3dac9] font-sans min-h-screen text-gray-800">
 
-    <!-- Navbar -->
     <nav class="w-full bg-[#3d2a1d] px-8 py-3 flex justify-between items-center shadow-md relative">
-        
-        <!-- Bagian Kiri: Logo -->
         <div class="flex items-center">
             <img src="{{ asset('images/logo.png') }}" alt="Serene Logo" class="h-25 object-contain">
         </div>
-        
-        <!-- Bagian Tengah: Judul -->
         <h1 class="text-white text-[28px] font-normal tracking-wide absolute left-1/2 transform -translate-x-1/2 m-0 whitespace-nowrap">
             Welcome back Pemilik
         </h1>
-        
-        <!-- Bagian Kanan: Profile Picture -->
         <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent">
             <img src="https://ui-avatars.com/api/?name=Pemilik&background=c27d42&color=fff" alt="Profile" class="w-full h-full object-cover">
         </div>
-        
     </nav>
 
-    <!-- Main Content -->
     <main class="max-w-[1000px] mx-auto pt-10 pb-12 px-6">
         
-        <!-- Navigation Pills (Sub-menu) -->
         <div class="flex justify-center mb-12">
             <div class="bg-[#a88669] rounded-full flex items-center p-1 shadow-sm overflow-hidden">
                 <a href="{{ route('dashboard') }}" class="bg-[#3d2a1d] text-white px-8 py-2.5 rounded-full text-sm font-medium transition-colors">Home</a>
                 <a href="{{ route('menu.index') }}" class="text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#8e6e53] transition-colors">Daftar Menu</a>
                 <a href="{{ route('membership.index') }}" class="text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#8e6e53] transition-colors">Daftar Membership</a>
-                <a href="{{ route('karyawan.index') }}" class="text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#8e6e53] transition-colors">Daftar Karyawan</a>
                 <a href="{{ route('keuangan.index') }}" class="text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#8e6e53] transition-colors">Pengeluaran Dan Pemasukan</a>
             </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-3 gap-8 mb-10">
-            <!-- Card 1: Menu -->
+        <div class="grid grid-cols-2 gap-8 mb-10 max-w-[600px] mx-auto">
             <div class="bg-[#f5eedc] rounded-2xl py-6 flex flex-col items-center justify-center shadow-sm">
                 <span class="text-[#3a2215] text-[17px] mb-3">Menu</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-11 w-11 text-[#3d2a1d] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -56,16 +42,6 @@
                 <span class="text-[#3a2215] font-semibold text-xl">20</span>
             </div>
 
-            <!-- Card 2: Karyawan -->
-            <div class="bg-[#f5eedc] rounded-2xl py-6 flex flex-col items-center justify-center shadow-sm">
-                <span class="text-[#3a2215] text-[17px] mb-3">Karyawan</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-11 w-11 text-[#3d2a1d] mb-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path fill-rule="evenodd" d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 004.25 22.5h15.5a1.875 1.875 0 001.865-2.071l-1.263-12a1.875 1.875 0 00-1.865-1.679H16.5V6a2.25 2.25 0 00-2.25-2.25h-4.5A2.25 2.25 0 007.5 6zM15 6.75V6a.75.75 0 00-.75-.75h-4.5A.75.75 0 009 6v.75h6z" clip-rule="evenodd" />
-                </svg>
-                <span class="text-[#3a2215] font-semibold text-xl">15</span>
-            </div>
-
-            <!-- Card 3: Membership -->
             <div class="bg-[#f5eedc] rounded-2xl py-6 flex flex-col items-center justify-center shadow-sm">
                 <span class="text-[#3a2215] text-[17px] mb-3">Membership</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-11 w-11 text-[#3d2a1d] mb-3" viewBox="0 0 24 24" fill="currentColor">
@@ -75,15 +51,11 @@
             </div>
         </div>
 
-        <!-- Keuangan Card (Chart Area) -->
         <div class="bg-[#f5eedc] rounded-3xl p-10 shadow-sm relative">
-            
             <div class="flex justify-between items-start mb-6">
-                <!-- Tambahin ID biar angkanya juga bisa ikut berubah nantinya -->
-                <h2 id="totalUang" class="text-[#2bd965] text-[42px] font-bold leading-none">Rp1.200.000</h2>
+                <h2 id="totalUang" class="text-[#2bd965] text-[42px] font-bold leading-none">{{ $chartData['harian']['total'] }}</h2>
                 
                 <div class="flex flex-col items-end gap-4">
-                    <!-- Dropdown Harian / Tambah ID dan Value -->
                     <div class="relative inline-block">
                         <select id="filterWaktu" class="bg-[#3d2a1d] text-white pl-4 pr-8 py-1.5 rounded-full text-sm outline-none border-none cursor-pointer appearance-none min-w-[110px]">
                             <option value="harian">Harian</option>
@@ -110,43 +82,18 @@
                 </div>
             </div>
 
-            <!-- Area Grafik Chart.js (Tombol Detail dibuang) -->
             <div class="h-[240px] w-full mt-8 px-4">
                 <canvas id="financeChart"></canvas>
             </div>
-
         </div>
     </main>
 
-    <!-- Script untuk menjalankan Grafik -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('financeChart').getContext('2d');
             
-            // =================================================================
-            // AREA DATA DUMMY DINAMIS
-            // Ini disiapkan berdasarkan filter (Harian, Mingguan, Bulanan)
-            // =================================================================
-            const chartData = {
-                harian: {
-                    labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
-                    pemasukan: [800000, 950000, 600000, 1200000, 700000, 850000, 900000],
-                    pengeluaran: [300000, 400000, 250000, 700000, 350000, 400000, 300000],
-                    total: 'Rp1.200.000'
-                },
-                mingguan: {
-                    labels: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'],
-                    pemasukan: [4500000, 5200000, 3800000, 6100000],
-                    pengeluaran: [1800000, 2100000, 1500000, 2400000],
-                    total: 'Rp8.400.000'
-                },
-                bulanan: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'],
-                    pemasukan: [15000000, 18000000, 16000000, 21000000, 19000000, 22000000, 24000000, 23000000, 25000000, 28000000, 26000000, 32000000],
-                    pengeluaran: [6000000, 7000000, 6500000, 8000000, 7500000, 9000000, 9500000, 8500000, 10000000, 11000000, 10500000, 14000000],
-                    total: 'Rp45.000.000'
-                }
-            };
+            // 🚨 NANGKEP DATA ASLI DARI DATABASE LARAVEL!
+            const chartData = @json($chartData);
 
             // Inisialisasi Chart awal pakai data 'harian'
             let myChart = new Chart(ctx, {
@@ -178,18 +125,14 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false 
-                        },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
+                                    if (label) label += ': ';
                                     if (context.parsed.y !== null) {
-                                        label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(context.parsed.y);
+                                        label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(context.parsed.y);
                                     }
                                     return label;
                                 }
@@ -197,20 +140,11 @@
                         }
                     },
                     scales: {
-                        y: {
-                            display: false, 
-                            beginAtZero: true
-                        },
+                        y: { display: false, beginAtZero: true },
                         x: {
-                            grid: {
-                                display: false, 
-                                drawBorder: false
-                            },
+                            grid: { display: false, drawBorder: false },
                             ticks: {
-                                font: {
-                                    weight: 'bold',
-                                    family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-                                },
+                                font: { weight: 'bold', family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" },
                                 color: '#3a2215'
                             }
                         }
@@ -218,14 +152,12 @@
                 }
             });
 
-            // =================================================================
             // LOGIKA SAAT DROPDOWN DIUBAH
-            // =================================================================
             const filterDropdown = document.getElementById('filterWaktu');
             const totalUangText = document.getElementById('totalUang');
 
             filterDropdown.addEventListener('change', function() {
-                const selectedValue = this.value; // 'harian', 'mingguan', atau 'bulanan'
+                const selectedValue = this.value; 
                 
                 // Update Angka Total Uang
                 totalUangText.innerText = chartData[selectedValue].total;
@@ -233,11 +165,11 @@
                 // Update Labels X-Axis
                 myChart.data.labels = chartData[selectedValue].labels;
                 
-                // Update Data Batang Pemasukan (Index 0) dan Pengeluaran (Index 1)
+                // Update Data Batang
                 myChart.data.datasets[0].data = chartData[selectedValue].pemasukan;
                 myChart.data.datasets[1].data = chartData[selectedValue].pengeluaran;
                 
-                // Render ulang grafiknya!
+                // Render ulang grafik
                 myChart.update();
             });
         });
