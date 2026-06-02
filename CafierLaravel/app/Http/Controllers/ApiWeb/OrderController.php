@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\OrderService;
 use App\Models\Transaction; 
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Controller;
 
 class OrderController extends Controller
 {
