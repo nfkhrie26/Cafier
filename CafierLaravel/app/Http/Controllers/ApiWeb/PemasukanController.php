@@ -15,19 +15,24 @@ class PemasukanController extends Controller
         // Pastiin lu punya field 'total_sold' di tabel products lu
         $topProducts = Product::orderBy('total_sold', 'desc')->take(10)->get();
 
-        // 2. Tarik Data Pemasukan (Tinggal buka comment kalo tabel lu udah siap)
-        // $pemasukans = Transaction::where('status', 'Berhasil')->orderBy('created_at', 'desc')->get();
-        $pemasukans = [
-            ['nama' => 'Mamat', 'tanggal' => '12-10-2025', 'waktu' => '10:10', 'metode' => 'Qris', 'nominal' => 'RP125.000', 'status' => 'Berhasil'],
-            ['nama' => 'Cila', 'tanggal' => '12-10-2025', 'waktu' => '10:15', 'metode' => 'Master Card', 'nominal' => 'RP125.000', 'status' => 'Berhasil'],
-            ['nama' => 'Adawong', 'tanggal' => '12-10-2025', 'waktu' => '10:20', 'metode' => 'Qris', 'nominal' => 'RP125.000', 'status' => 'Berhasil'],
-        ];
+        // 2. Tarik Data Pemasukan
+        $transactions = \App\Models\Transaction::with('customer')->orderBy('created_at', 'desc')->get();
+        $pemasukans = $transactions->map(function($trx) {
+            return [
+                'nama' => $trx->customer ? $trx->customer->name : '-',
+                'tanggal' => $trx->created_at ? $trx->created_at->format('d-m-Y') : '-',
+                'waktu' => $trx->created_at ? $trx->created_at->format('H:i') : '-',
+                'metode' => $trx->payment_info['method'] ?? 'Cash',
+                'nominal' => 'Rp ' . number_format($trx->total_amount, 0, ',', '.'),
+                'status' => $trx->status ?? 'Berhasil'
+            ];
+        });
 
         // 3. Tarik Data Pengeluaran
         // $pengeluarans = Expense::orderBy('created_at', 'desc')->get();
         $pengeluarans = [
-            ['nama' => 'Kopi Arabica', 'tanggal' => '12-9-2025', 'waktu' => '10:10', 'metode' => 'Qris', 'nominal' => 'RP5.000.000', 'kategori' => 'Oprasional'],
-            ['nama' => 'Gaji Barista', 'tanggal' => '30-8-2025', 'waktu' => '10:15', 'metode' => 'Transfer', 'nominal' => 'RP12.500.000', 'kategori' => 'Oprasional'],
+            ['nama' => 'Kopi Arabica', 'tanggal' => '12-09-2026', 'waktu' => '10:10', 'metode' => 'Qris', 'nominal' => 'Rp 5.000.000', 'kategori' => 'Operasional'],
+            ['nama' => 'Gaji Barista', 'tanggal' => '30-08-2026', 'waktu' => '10:15', 'metode' => 'Transfer', 'nominal' => 'Rp 12.500.000', 'kategori' => 'Operasional'],
         ];
 
         // Rangkum 3 data ini jadi satu paket JSON

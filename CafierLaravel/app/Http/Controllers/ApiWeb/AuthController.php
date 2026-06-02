@@ -43,5 +43,11 @@ class AuthController extends Controller
                 ]
             ], 200);
         }
+
+        // 🚨 Kalo password salah, WAJIB return ini biar frontend ga crash!
+        return response()->json([
+            'success' => false,
+            'message' => 'Email atau Password salah!'
+        ], 401);
     }
 }
