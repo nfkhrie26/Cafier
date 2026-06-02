@@ -34,32 +34,34 @@
             </div>
         </div>
 
-        <!-- Dummy Data Membership (Updated with Initials & Colors) -->
-        @php
-            $memberships = [
-                ['nama' => 'Cila', 'inisial' => 'CI', 'tier' => 'Platinum', 'bg' => 'bg-[#2b3a4a]'],
-                ['nama' => 'Mamat', 'inisial' => 'MA', 'tier' => 'Gold', 'bg' => 'bg-[#2b3a4a]'],
-                ['nama' => 'Michelle', 'inisial' => 'MI', 'tier' => 'Silver', 'bg' => 'bg-[#9b51e0]'],
-                ['nama' => 'Angel', 'inisial' => 'AN', 'tier' => 'Gold', 'bg' => 'bg-[#9b51e0]'],
-                ['nama' => 'Ada', 'inisial' => 'AD', 'tier' => 'Platinum', 'bg' => 'bg-[#9b51e0]'],
-                ['nama' => 'Leon', 'inisial' => 'LE', 'tier' => 'Silver', 'bg' => 'bg-[#2b3a4a]'],
-                ['nama' => 'Zaka', 'inisial' => 'ZA', 'tier' => 'Silver', 'bg' => 'bg-[#2b3a4a]'],
-                ['nama' => 'Osanna', 'inisial' => 'OS', 'tier' => 'Gold', 'bg' => 'bg-[#9b51e0]'],
-                ['nama' => 'Bayu', 'inisial' => 'BA', 'tier' => 'Platinum', 'bg' => 'bg-[#2b3a4a]'],
-            ];
-        @endphp
-
         <!-- Grid Container untuk Card Membership -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
             
             @foreach($memberships as $member)
             
             @php
+                $nama = $member['name'] ?? 'Unknown';
+                $tier = ucfirst($member['current_rank'] ?? 'Silver');
+                
+                // Ambil inisial 2 huruf pertama dari nama
+                $words = explode(' ', $nama);
+                $inisial = '';
+                if(count($words) >= 2) {
+                    $inisial = strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+                } else {
+                    $inisial = strtoupper(substr($nama, 0, 2));
+                }
+                
+                // Pilih warna background acak berdasarkan nama
+                $bgColors = ['bg-[#2b3a4a]', 'bg-[#9b51e0]', 'bg-[#1b5e20]', 'bg-[#b71c1c]'];
+                $bgIdx = strlen($nama) % count($bgColors);
+                $bgStyle = $bgColors[$bgIdx];
+
                 // Logika Warna Badge Tier
                 $badgeStyle = '';
-                if($member['tier'] == 'Platinum') {
+                if($tier == 'Platinum') {
                     $badgeStyle = 'bg-gradient-to-r from-[#452d1f] to-[#1c110b] text-white font-bold';
-                } elseif ($member['tier'] == 'Gold') {
+                } elseif ($tier == 'Gold') {
                     $badgeStyle = 'bg-gradient-to-r from-[#d18436] to-[#ad6117] text-white font-bold';
                 } else {
                     $badgeStyle = 'bg-gradient-to-r from-[#e8e2da] to-[#bcab9e] text-[#3a2215] font-bold';
@@ -72,15 +74,15 @@
                 <!-- Bagian Atas: Gambar Inisial & Info -->
                 <div class="flex items-center gap-6 mb-6">
                     <!-- Frame Gambar Inisial -->
-                    <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-[28px] font-normal {{ $member['bg'] }} shadow-inner flex-shrink-0">
-                        {{ $member['inisial'] }}
+                    <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-[28px] font-normal {{ $bgStyle }} shadow-inner flex-shrink-0">
+                        {{ $inisial }}
                     </div>
                     
                     <!-- Teks Nama & Badge -->
                     <div class="flex flex-col items-center flex-1">
-                        <h3 class="text-[#3a2215] text-[22px] font-medium mb-2">{{ $member['nama'] }}</h3>
+                        <h3 class="text-[#3a2215] text-[22px] font-medium mb-2">{{ $nama }}</h3>
                         <div class="{{ $badgeStyle }} px-6 py-1.5 rounded-full text-sm tracking-wide w-full text-center shadow-sm">
-                            {{ $member['tier'] }}
+                            {{ $tier }}
                         </div>
                     </div>
                 </div>
@@ -88,7 +90,7 @@
                 <!-- Bagian Bawah: Tombol Action -->
                 <div class="flex items-center gap-3 mt-auto">
                     <!-- Tombol Cek Profil (Buka Modal) -->
-                    <button onclick="openModal('{{ $member['nama'] }}', '{{ $member['tier'] }}')" class="flex-1 bg-[#ffcc00] hover:bg-[#e6b800] text-white text-[15px] font-bold py-3 rounded-full transition-colors">
+                    <button onclick="openModal('{{ $nama }}', '{{ $tier }}')" class="flex-1 bg-[#ffcc00] hover:bg-[#e6b800] text-white text-[15px] font-bold py-3 rounded-full transition-colors">
                         Cek Profil
                     </button>
                     

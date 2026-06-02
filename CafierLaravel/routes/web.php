@@ -10,33 +10,24 @@ use App\Http\Controllers\KeuanganController;
 
 // RUTE OTENTIKASI (LOGIN & PASSWORD)
 Route::get('/', function () {
-    return view('login');
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Ini adalah Backend API CafierLaravel. Silakan buka aplikasi web Anda di port sebelahnya (CafierWeb).'
+    ]);
 });
 
-Route::get('/forgot-password', function () {
-    return view('forgot-password');
-})->name('password.request');
+// Redirect rute nyasar ke frontend
+Route::get('/daftar-menu', function () {
+    return redirect('http://127.0.0.1:8001/menu');
+});
 
+Route::get('/keuangan', function () {
+    return redirect('http://127.0.0.1:8001/pengeluaran-pemasukan');
+});
 
-// RUTE DASHBOARD & HALAMAN STATIS
 Route::get('/dashboard', function () {
-    return view('dashboard');
-})->name('dashboard');
-
-Route::get('/daftar-membership', function () {
-    return view('daftar-membership');
-})->name('membership.index');
-
-Route::get('/daftar-karyawan', function () {
-    return view('daftar-karyawan');
-})->name('karyawan.index');
-
-// RUTE MENU KAFE (Diurus oleh MenuController)
-Route::get('/daftar-menu', [MenuController::class, 'index'])->name('menu.index');
-Route::post('/pemilik/menu/store', [MenuController::class, 'store'])->name('menu.store');
-Route::put('/pemilik/menu/update/{id}', [MenuController::class, 'update'])->name('menu.update');
-Route::get('/keuangan', [KeuanganController::class, 'index'])->name('keuangan.index');
-
+    return redirect('http://127.0.0.1:8001/dashboard');
+});
 
 // RUTE API (Untuk Aplikasi Mobile)
 Route::apiResource('categories', CategoryController::class);

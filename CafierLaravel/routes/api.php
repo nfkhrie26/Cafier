@@ -35,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/web/memberships', [MembershipController::class, 'index']);
     Route::put('/web/memberships/{id}', [MembershipController::class, 'update']);
     Route::delete('/web/memberships/{id}', [MembershipController::class, 'destroy']);
+    
     // Masukin ke dalem grup auth:sanctum
     Route::get('/web/finances', [PemasukanController::class, 'index']);
     });

@@ -45,7 +45,7 @@
         </div>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-3 gap-8 mb-10">
+        <div class="grid grid-cols-2 gap-8 mb-10">
             <!-- Card 1: Menu -->
             <div class="bg-[#f5eedc] rounded-2xl py-6 flex flex-col items-center justify-center shadow-sm">
                 <span class="text-[#3a2215] text-[17px] mb-3">Menu</span>
@@ -53,15 +53,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
                 <span class="text-[#3a2215] font-semibold text-xl">{{ $stats['menu'] }}</span>
-            </div>
-
-            <!-- Card 2: Karyawan -->
-            <div class="bg-[#f5eedc] rounded-2xl py-6 flex flex-col items-center justify-center shadow-sm">
-                <span class="text-[#3a2215] text-[17px] mb-3">Karyawan</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-11 w-11 text-[#3d2a1d] mb-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path fill-rule="evenodd" d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 004.25 22.5h15.5a1.875 1.875 0 001.865-2.071l-1.263-12a1.875 1.875 0 00-1.865-1.679H16.5V6a2.25 2.25 0 00-2.25-2.25h-4.5A2.25 2.25 0 007.5 6zM15 6.75V6a.75.75 0 00-.75-.75h-4.5A.75.75 0 009 6v.75h6z" clip-rule="evenodd" />
-                </svg>
-                <span class="text-[#3a2215] font-semibold text-xl">{{ $stats['karyawan'] }}</span>
             </div>
 
             <!-- Card 3: Membership -->
