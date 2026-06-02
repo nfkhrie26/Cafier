@@ -3,12 +3,12 @@ import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 // import { getItemAsync, deleteItemAsync } from './storage';
 
-export const IMAGE_BASE_URL = 'https://trinity-milliary-mitzie.ngrok-free.dev/storage/';
+export const IMAGE_BASE_URL = 'https://broiler-anyone-unloving.ngrok-free.dev/storage/';
 
 // 1. Bikin instance (kurir khusus buat Cafier)
 const api = axios.create({
   // SKEPTIS ALERT: Pastiin IP lu belom ganti ya!
-  baseURL: 'https://trinity-milliary-mitzie.ngrok-free.dev/api', 
+  baseURL: 'https://broiler-anyone-unloving.ngrok-free.dev/api', 
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",

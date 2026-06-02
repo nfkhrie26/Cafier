@@ -37,8 +37,10 @@ class MidtransService
             ],
 
             'callbacks' => [
-            'finish' => 'https://cafier-app.com/payment-finish'
-        ]
+                'finish' => 'https://cafier-app.com/payment-finish'
+            ],
+            // 🚨 BATASI PEMBAYARAN HANYA QRIS/E-WALLET
+            'enabled_payments' => ['gopay', 'shopeepay', 'other_qris']
             // Data items (keranjang) dari MongoDB lu bisa di-passing ke sini kalo mau
         ];
 

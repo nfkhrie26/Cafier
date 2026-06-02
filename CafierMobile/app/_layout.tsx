@@ -57,14 +57,6 @@ export default function RootLayout() {
 
   // Kalo udah aman, buka gerbangnya (pake Stack biar halamannya gak numpuk)
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {/* 🚨 DAFTARIN FOLDER GRUP LU DI SINI BIAR EXPO GAK NEBAK-NEBAK */}
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(customer)" />
-      <Stack.Screen name="(barista)" />
-      
-      {/* Jaga-jaga kalo user nyasar ke halaman yang ga ada */}
-      <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
-    </Stack>
+    <Stack screenOptions={{ headerShown: false }} />
   );
 }
