@@ -176,7 +176,15 @@ export default function OrderStatusScreen() {
                   
                   <View style={styles.itemInfo}>
                     <Text style={styles.itemName}>{itemName}</Text>
-                    <Text style={styles.itemDesc}>{item.notes || 'Normal'}</Text>
+                    
+                    {item.variantDetails && item.variantDetails.map((variant: any, idx: number) => (
+                      <View key={idx} style={{ flexDirection: 'row', marginTop: 2 }}>
+                        <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#555' }}>{variant.title}: </Text>
+                        <Text style={{ fontSize: 11, color: '#777' }}>{variant.name}</Text>
+                      </View>
+                    ))}
+
+                    {item.notes ? <Text style={[styles.itemDesc, { marginTop: 4, fontStyle: 'italic' }]}>Notes: {item.notes}</Text> : null}
                   </View>
                   <Text style={styles.itemQty}>{item.quantity || item.qty}x</Text>
                 </View>

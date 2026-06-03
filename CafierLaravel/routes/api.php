@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Masukin ke dalem grup auth:sanctum
     Route::get('/web/finances', [PemasukanController::class, 'index']);
+    Route::post('/web/finances/expenses', [PemasukanController::class, 'storeExpense']);
     });
 // =====================================
 

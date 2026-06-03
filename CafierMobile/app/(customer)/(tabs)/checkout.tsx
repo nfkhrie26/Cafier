@@ -25,7 +25,7 @@ export default function CheckoutScreen() {
     clearCart 
   } = useCart();
   
-  const [paymentMethod, setPaymentMethod] = useState('qris');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [loading, setLoading] = useState(false);
   const [snapToken, setSnapToken] = useState('');
   const [showPayment, setShowPayment] = useState(false);
@@ -252,10 +252,6 @@ export default function CheckoutScreen() {
               <Text style={styles.logoText}>QRIS</Text> 
               <Ionicons name={paymentMethod === 'qris' ? "radio-button-on" : "radio-button-off"} size={22} color="#4A3525" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.paymentOption} onPress={() => setPaymentMethod('mastercard')}>
-              <Text style={styles.logoText}>Mastercard</Text>
-              <Ionicons name={paymentMethod === 'mastercard' ? "radio-button-on" : "radio-button-off"} size={22} color="#4A3525" />
-            </TouchableOpacity>
           </View>
 
           <Text style={styles.sectionTitle}>Rincian Pembayaran</Text>
@@ -288,7 +284,11 @@ export default function CheckoutScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.placeOrderBtn} disabled={loading} onPress={handleCheckout}>
+          <TouchableOpacity 
+            style={[styles.placeOrderBtn, !paymentMethod && { backgroundColor: '#ccc', opacity: 0.7 }]} 
+            disabled={loading || !paymentMethod} 
+            onPress={handleCheckout}
+          >
             {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.placeOrderText}>Pesan Sekarang</Text>}
           </TouchableOpacity>
         </ScrollView>

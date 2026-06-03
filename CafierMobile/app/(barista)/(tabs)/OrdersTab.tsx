@@ -101,7 +101,15 @@ export default function OrdersTab() {
                   </View>
                   <View style={styles.itemDetails}>
                     <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.itemDesc}>{item.desc}</Text>
+                    
+                    {item.variantDetails && item.variantDetails.map((variant: any, idx: number) => (
+                      <View key={idx} style={{ flexDirection: 'row', marginTop: 2 }}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#4A3728' }}>{variant.title}: </Text>
+                        <Text style={{ fontSize: 12, color: '#7f8c8d' }}>{variant.name}</Text>
+                      </View>
+                    ))}
+
+                    {(item.notes || item.desc) ? <Text style={[styles.itemDesc, { marginTop: 4, fontStyle: 'italic' }]}>Notes: {item.notes || item.desc}</Text> : null}
                   </View>
                   <Text style={styles.itemQty}>x{item.qty}</Text>
                 </View>
@@ -135,7 +143,15 @@ export default function OrdersTab() {
                     </View>
                     <View style={styles.itemDetails}>
                       <Text style={styles.itemName}>{item.name}</Text>
-                      <Text style={styles.itemDesc}>{item.desc}</Text>
+                      
+                      {item.variantDetails && item.variantDetails.map((variant: any, idx: number) => (
+                        <View key={idx} style={{ flexDirection: 'row', marginTop: 2 }}>
+                          <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#4A3728' }}>{variant.title}: </Text>
+                          <Text style={{ fontSize: 12, color: '#7f8c8d' }}>{variant.name}</Text>
+                        </View>
+                      ))}
+
+                      {(item.notes || item.desc) ? <Text style={[styles.itemDesc, { marginTop: 4, fontStyle: 'italic' }]}>Notes: {item.notes || item.desc}</Text> : null}
                     </View>
                     <Text style={styles.itemQty}>x{item.qty}</Text>
                   </View>

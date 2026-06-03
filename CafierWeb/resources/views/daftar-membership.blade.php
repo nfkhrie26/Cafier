@@ -90,7 +90,7 @@
                 <!-- Bagian Bawah: Tombol Action -->
                 <div class="flex items-center gap-3 mt-auto">
                     <!-- Tombol Cek Profil (Buka Modal) -->
-                    <button onclick="openModal('{{ $nama }}', '{{ $tier }}')" class="flex-1 bg-[#ffcc00] hover:bg-[#e6b800] text-white text-[15px] font-bold py-3 rounded-full transition-colors">
+                    <button onclick="openModal('{{ $nama }}', '{{ $member['email'] ?? str_replace(' ', '', strtolower($nama)) . '@gmail.com' }}', '{{ isset($member['created_at']) ? substr($member['created_at'], 0, 10) : date('Y-m-d') }}')" class="flex-1 bg-[#ffcc00] hover:bg-[#e6b800] text-white text-[15px] font-bold py-3 rounded-full transition-colors">
                         Cek Profil
                     </button>
                     
@@ -109,60 +109,39 @@
     </main>
 
     <!-- ========================================== -->
-    <!-- MODAL / POP-UP UPDATE PROFIL               -->
+    <!-- MODAL / POP-UP CEK PROFIL                  -->
     <!-- ========================================== -->
     <div id="profileModal" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center backdrop-blur-[2px] transition-all duration-300">
         
         <!-- Modal Content Box -->
         <div class="bg-[#f5eedc] rounded-[24px] p-10 w-full max-w-[650px] shadow-2xl relative transform scale-95 transition-transform duration-300" id="modalContent">
             
-            <form class="flex flex-col gap-5">
-                <!-- Field Username -->
+            <div class="flex flex-col gap-5">
+                <!-- Field Name -->
                 <div>
-                    <label class="block text-[#3a2215] text-[15px] font-medium mb-1">Username</label>
-                    <input type="text" id="modalUsername" class="w-full bg-[#f1e6cd] border border-[#d6c7ab] text-[#3a2215] rounded-xl px-4 py-2.5 outline-none focus:border-[#a88669] transition-colors">
+                    <label class="block text-[#3a2215] text-[15px] font-medium mb-1">Name</label>
+                    <input type="text" id="modalName" readonly class="w-full bg-[#e3dac9] border border-[#d6c7ab] text-[#3a2215] rounded-xl px-4 py-2.5 outline-none cursor-not-allowed">
                 </div>
 
                 <!-- Field Email -->
                 <div>
                     <label class="block text-[#3a2215] text-[15px] font-medium mb-1">Email</label>
-                    <input type="email" id="modalEmail" class="w-full bg-[#f1e6cd] border border-[#d6c7ab] text-[#3a2215] rounded-xl px-4 py-2.5 outline-none focus:border-[#a88669] transition-colors">
-                </div>
-
-                <!-- Field Password -->
-                <div>
-                    <label class="block text-[#3a2215] text-[15px] font-medium mb-1">Password</label>
-                    <input type="password" class="w-full bg-[#f1e6cd] border border-[#d6c7ab] text-[#3a2215] rounded-xl px-4 py-2.5 outline-none focus:border-[#a88669] transition-colors" placeholder="••••••••">
-                </div>
-
-                <!-- Field Rank Pelanggan -->
-                <div>
-                    <label class="block text-[#3a2215] text-[15px] font-medium mb-1">Rank Pelanggan</label>
-                    <input type="text" id="modalRank" class="w-full bg-[#f1e6cd] border border-[#d6c7ab] text-[#3a2215] rounded-xl px-4 py-2.5 outline-none focus:border-[#a88669] transition-colors">
-                </div>
-
-                <!-- Field Tanggal Lahir -->
-                <div>
-                    <label class="block text-[#3a2215] text-[15px] font-medium mb-1">Tanggal Lahir</label>
-                    <input type="date" class="w-full bg-[#f1e6cd] border border-[#d6c7ab] text-[#3a2215] rounded-xl px-4 py-2.5 outline-none focus:border-[#a88669] transition-colors">
+                    <input type="email" id="modalEmail" readonly class="w-full bg-[#e3dac9] border border-[#d6c7ab] text-[#3a2215] rounded-xl px-4 py-2.5 outline-none cursor-not-allowed">
                 </div>
 
                 <!-- Field Join Membership Sejak -->
                 <div>
                     <label class="block text-[#3a2215] text-[15px] font-medium mb-1">Join Membership Sejak</label>
-                    <input type="date" class="w-full bg-[#f1e6cd] border border-[#d6c7ab] text-[#3a2215] rounded-xl px-4 py-2.5 outline-none focus:border-[#a88669] transition-colors">
+                    <input type="date" id="modalJoin" readonly class="w-full bg-[#e3dac9] border border-[#d6c7ab] text-[#3a2215] rounded-xl px-4 py-2.5 outline-none cursor-not-allowed">
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex justify-center gap-6 mt-6">
+                <div class="flex justify-center mt-6">
                     <button type="button" onclick="closeModal()" class="bg-[#ff4b4b] hover:bg-[#e64343] text-white px-12 py-3 rounded-2xl font-bold text-[17px] transition-colors shadow-sm w-[180px]">
                         Kembali
                     </button>
-                    <button type="submit" class="bg-[#00ff2a] hover:bg-[#00e626] text-white px-12 py-3 rounded-2xl font-bold text-[17px] transition-colors shadow-sm w-[180px]">
-                        Update
-                    </button>
                 </div>
-            </form>
+            </div>
 
         </div>
     </div>
@@ -173,7 +152,7 @@
         const modalContent = document.getElementById('modalContent');
 
         // Fungsi Buka Modal & Isi Data Otomatis
-        function openModal(nama, rank) {
+        function openModal(nama, email, joinDate) {
             modal.classList.remove('hidden');
             
             // Animasi kecil biar munculnya smooth
@@ -183,9 +162,9 @@
             }, 10);
 
             // Isi inputan otomatis berdasarkan card yang diklik
-            document.getElementById('modalUsername').value = nama;
-            document.getElementById('modalEmail').value = nama.toLowerCase().replace(' ', '') + "@gmail.com"; // dummy email
-            document.getElementById('modalRank').value = rank;
+            document.getElementById('modalName').value = nama;
+            document.getElementById('modalEmail').value = email;
+            document.getElementById('modalJoin').value = joinDate;
         }
 
         // Fungsi Tutup Modal

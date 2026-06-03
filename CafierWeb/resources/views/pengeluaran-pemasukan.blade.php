@@ -40,7 +40,41 @@
         </div>
 
         <div id="content-top">
-            <h2 class="text-center text-[26px] font-bold text-[#3a2215] mb-6">TOP Penjualan Bulan Ini</h2>
+            @php
+                $mReq = request('month', date('m'));
+                $yReq = request('year', date('Y'));
+                $monthName = date('F', mktime(0, 0, 0, $mReq, 1));
+            @endphp
+            
+            <div class="flex justify-between items-center mb-6 max-w-[900px] mx-auto">
+                <h2 class="text-[26px] font-bold text-[#3a2215] m-0">Top Penjualan {{ $monthName }} {{ $yReq }}</h2>
+                
+                <form method="GET" action="{{ route('keuangan.index') }}" class="flex gap-3 m-0">
+                    <div class="relative">
+                        <select name="month" onchange="this.form.submit()" class="appearance-none pl-4 pr-10 py-2.5 rounded-lg border border-[#d6c7ab] bg-[#f5eedc] text-[#3a2215] focus:outline-none cursor-pointer">
+                            @for($m=1; $m<=12; $m++)
+                                <option value="{{ sprintf('%02d', $m) }}" {{ $mReq == sprintf('%02d', $m) ? 'selected' : '' }}>
+                                    {{ date('F', mktime(0, 0, 0, $m, 1)) }}
+                                </option>
+                            @endfor
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#3a2215]">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+                    
+                    <div class="relative">
+                        <select name="year" onchange="this.form.submit()" class="appearance-none pl-4 pr-10 py-2.5 rounded-lg border border-[#d6c7ab] bg-[#f5eedc] text-[#3a2215] focus:outline-none cursor-pointer">
+                            @for($y=date('Y'); $y>=2020; $y--)
+                                <option value="{{ $y }}" {{ $yReq == $y ? 'selected' : '' }}>{{ $y }}</option>
+                            @endfor
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#3a2215]">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+                </form>
+            </div>
             
             <div class="bg-[#f5eedc] max-w-[900px] mx-auto shadow-sm overflow-hidden text-[#3a2215]">
                 <table class="w-full text-left border-collapse">
@@ -123,7 +157,17 @@
         </div>
 
         <div id="content-pengeluaran" class="hidden">
-            <h2 class="text-center text-[22px] font-bold text-[#3a2215] mb-6">Riwayat Transaksi Pengeluaran</h2>
+            <div class="flex justify-between items-center mb-6 w-full max-w-[900px] mx-auto">
+                <h2 class="text-[22px] font-bold text-[#3a2215] m-0">Riwayat Transaksi Pengeluaran</h2>
+                <button onclick="openExpenseModal()" class="bg-[#ff4b4b] text-white px-6 py-2.5 rounded-xl font-medium hover:bg-[#e64343] transition-colors shadow-sm">
+                    + Tambah Pengeluaran
+                </button>
+            </div>
+            
+            @if($errors->any())
+                <div class="mb-4 max-w-[900px] mx-auto p-4 bg-red-100 text-red-700 rounded-xl font-bold text-center">{{ $errors->first() }}</div>
+            @endif
+
             <div class="bg-[#f5eedc] w-full shadow-sm overflow-hidden text-[#3a2215]">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
@@ -133,7 +177,6 @@
                             <th class="py-4 px-6 font-semibold">Pukul</th>
                             <th class="py-4 px-6 font-semibold">Metode</th>
                             <th class="py-4 px-6 font-semibold">Nominal</th>
-                            <th class="py-4 px-6 font-semibold">Kategori</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -144,7 +187,6 @@
                                 <td class="py-4 px-6">{{ $item['waktu'] ?? '-' }}</td>
                                 <td class="py-4 px-6">{{ $item['metode'] ?? '-' }}</td>
                                 <td class="py-4 px-6 font-medium text-[#ff4b4b]">{{ $item['nominal'] ?? '-' }}</td>
-                                <td class="py-4 px-6 font-medium text-[#ff4b4b]">{{ $item['kategori'] ?? '-' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -269,6 +311,73 @@
 
         if (rows.length > 0) {
             displayPage(1);
+        }
+    </script>
+    
+    <!-- MODAL TAMBAH PENGELUARAN -->
+    <div id="expenseModal" class="fixed inset-0 bg-black/60 hidden justify-center items-center z-[9999] opacity-0 transition-all duration-300">
+        <div id="expenseModalContent" class="bg-[#FDF6E3] p-10 rounded-[30px] w-[90%] max-w-[500px] shadow-2xl relative transform scale-95 transition-transform duration-300">
+            
+            <form method="POST" action="{{ route('keuangan.storeExpense') }}">
+                @csrf
+                <h2 class="text-3xl font-bold text-center text-[#3a2215] mb-8">Tambah Pengeluaran</h2>
+
+                <div class="mb-5">
+                    <label class="block mb-2 font-medium text-gray-800 ml-2">Nama Pengeluaran</label>
+                    <input type="text" name="nama" class="w-full px-5 py-3.5 rounded-[15px] border border-[#DED1B8] bg-[#EFE1C9] text-gray-700 focus:outline-none focus:border-[#A8926D]" required placeholder="Misal: Beli Kopi">
+                </div>
+
+                <div class="mb-5">
+                    <label class="block mb-2 font-medium text-gray-800 ml-2">Nominal (Rp)</label>
+                    <input type="number" name="nominal" class="w-full px-5 py-3.5 rounded-[15px] border border-[#DED1B8] bg-[#EFE1C9] text-gray-700 focus:outline-none focus:border-[#A8926D]" required placeholder="Misal: 50000">
+                </div>
+
+                <div class="mb-8">
+                    <label class="block mb-2 font-medium text-gray-800 ml-2">Metode</label>
+                    <select name="metode" class="w-full px-5 py-3.5 rounded-[15px] border border-[#DED1B8] bg-[#EFE1C9] text-gray-700 focus:outline-none focus:border-[#A8926D]" required>
+                        <option value="Cash">Cash</option>
+                        <option value="Transfer">Transfer</option>
+                        <option value="QRIS">QRIS</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-center gap-6">
+                    <button type="button" onclick="closeExpenseModal()" class="bg-[#FF3D3D] hover:bg-[#E03535] text-white py-3 w-[150px] rounded-[15px] font-bold text-[18px] transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" class="bg-[#00FF00] hover:bg-[#00E000] text-white py-3 w-[150px] rounded-[15px] font-bold text-[18px] transition-colors">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function openExpenseModal() {
+            const modal = document.getElementById('expenseModal');
+            const content = document.getElementById('expenseModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeExpenseModal() {
+            const modal = document.getElementById('expenseModal');
+            const content = document.getElementById('expenseModalContent');
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
         }
     </script>
 </body>

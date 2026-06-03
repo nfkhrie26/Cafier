@@ -55,13 +55,10 @@ export default function OrderHistory() {
     return '#95A5A6'; 
   };
 
-// 🚨 KOREKSI 2: Ganti teks di layar history jadi 'COMPLETED'
+// 🚨 KOREKSI 2: Samain teks dengan status aslinya biar sinkron
   const getDisplayStatus = (status: string) => {
-    const s = status?.toUpperCase() || 'UNKNOWN';
-    if (s === 'COMPLETED') return 'COMPLETED'; // Tadinya silakan pick up
-    if (s === 'PROCESSED') return 'SEDANG DIBUAT';
-    if (s === 'PENDING') return 'MENUNGGU PEMBAYARAN';
-    return s;
+    if (!status) return 'UNKNOWN';
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   };
 
   return (
@@ -129,7 +126,15 @@ export default function OrderHistory() {
                       
                       <View style={styles.itemInfo}>
                         <Text style={styles.itemName}>{itemName}</Text>
-                        <Text style={styles.itemDesc}>{item.notes || 'Normal'}</Text>
+                        
+                        {item.variantDetails && item.variantDetails.map((variant: any, idx: number) => (
+                          <View key={idx} style={{ flexDirection: 'row', marginTop: 2 }}>
+                            <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#555' }}>{variant.title}: </Text>
+                            <Text style={{ fontSize: 11, color: '#777' }}>{variant.name}</Text>
+                          </View>
+                        ))}
+                        
+                        {item.notes ? <Text style={[styles.itemDesc, { marginTop: 4, fontStyle: 'italic' }]}>Notes: {item.notes}</Text> : null}
                       </View>
                       <Text style={styles.itemQty}>{item.quantity || item.qty}x</Text>
                     </View>

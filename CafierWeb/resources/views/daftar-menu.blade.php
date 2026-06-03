@@ -102,7 +102,7 @@
     <div id="editMenuModal" class="fixed inset-0 bg-black/60 flex justify-center items-center z-[9999] opacity-0 invisible transition-all duration-300">
         <div id="modalContent" class="bg-[#FDF6E3] p-10 md:p-14 rounded-[30px] w-[90%] max-w-[600px] shadow-2xl relative transform scale-95 transition-transform duration-300">
             
-            <form id="editMenuForm" method="POST" action="">
+            <form id="editMenuForm" method="POST" action="" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="_method" id="method_spoof" value="POST">
                 <input type="hidden" name="menu_id" id="modal_menu_id">
@@ -122,6 +122,11 @@
                 <div class="mb-5">
                     <label class="block mb-2 font-medium text-gray-800 ml-2">Deskripsi</label>
                     <input type="text" id="modal_deskripsi" name="description" class="w-full px-5 py-3.5 rounded-[15px] border border-[#DED1B8] bg-[#EFE1C9] text-gray-700 focus:outline-none focus:border-[#A8926D]">
+                </div>
+
+                <div class="mb-5">
+                    <label class="block mb-2 font-medium text-gray-800 ml-2">Foto Menu</label>
+                    <input type="file" id="modal_image" name="image" accept="image/*" class="w-full px-5 py-3.5 rounded-[15px] border border-[#DED1B8] bg-[#EFE1C9] text-gray-700 focus:outline-none focus:border-[#A8926D]">
                 </div>
 
                 <div class="mb-8">

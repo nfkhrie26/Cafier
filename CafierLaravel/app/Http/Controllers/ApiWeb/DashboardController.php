@@ -14,6 +14,7 @@ class DashboardController extends Controller
         // 1. NGITUNG DATA KARTU ATAS
         $totalMenu = Product::count();
         $totalMembership = User::where('role', 'customer')->count(); // Anggap customer itu member
+        $totalTransaksi = \App\Models\Transaction::count();
 
         // Menghitung chart data (Dummy fallback dengan total dinamis jika belum ada transaksi)
         $totalPemasukanDb = \App\Models\Transaction::sum('total_amount') ?? 0;
@@ -44,7 +45,8 @@ class DashboardController extends Controller
             'data' => [
                 'stats' => [
                     'menu' => $totalMenu,
-                    'membership' => $totalMembership
+                    'membership' => $totalMembership,
+                    'transaksi' => $totalTransaksi
                 ],
                 'chart_data' => $chartData
             ]

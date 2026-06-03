@@ -20,13 +20,27 @@ interface Product {
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [menus, setMenus] = useState<Product[]>([]);
+  const [stats, setStats] = useState({ membership: 0, transaksi: 0 });
   const [activeCategory, setActiveCategory] = useState('Semua');
 
-  const fetchMenu = async () => {
+  const fetchData = async () => {
     try {
-      const response = await api.get('/products');
-      const hasilData = response.data.data || response.data;
-      setMenus(Array.isArray(hasilData) ? hasilData : []);
+      const menuRes = await api.get('/products');
+      const menuData = menuRes.data.data || menuRes.data;
+      setMenus(Array.isArray(menuData) ? menuData : []);
+
+      try {
+        const dashRes = await api.get('/web/dashboard');
+        if (dashRes.data?.data?.stats) {
+          setStats({
+            membership: dashRes.data.data.stats.membership || 0,
+            transaksi: dashRes.data.data.stats.transaksi || 0,
+          });
+        }
+      } catch (e) {
+        console.log("Gagal tarik stats:", e);
+      }
+
       setLoading(false);
     } catch (error) {
       console.error("Gagal ambil menu:", error);
@@ -35,7 +49,7 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchMenu();
+    fetchData();
   }, []);
 
   const toggleStatus = async (id: string | number, field: string, currentValue: boolean | undefined) => {
@@ -44,7 +58,7 @@ const Dashboard = () => {
       await api.put(`/products/${id}`, { [field]: !currentValue });
     } catch (error) {
       alert("Gagal update!");
-      fetchMenu(); 
+      fetchData(); 
     }
   };
 
@@ -55,7 +69,7 @@ const Dashboard = () => {
       await api.put(`/products/${id}`, { stock: newStock });
     } catch (error) {
       alert("Gagal update stok!");
-      fetchMenu();
+      fetchData();
     }
   };
 
@@ -105,8 +119,8 @@ const Dashboard = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.statsRow}>
           <StatCard icon={<Feather name="coffee" size={24} color="#3d2a1d"/>} label="Menu" value={menus.length} />
-          <StatCard icon={<Feather name="file-text" size={24} color="#3d2a1d"/>} label="Transaksi" value={35} />
-          <StatCard icon={<Feather name="users" size={24} color="#3d2a1d"/>} label="Membership" value={50} />
+          <StatCard icon={<Feather name="file-text" size={24} color="#3d2a1d"/>} label="Transaksi" value={stats.transaksi} />
+          <StatCard icon={<Feather name="users" size={24} color="#3d2a1d"/>} label="Membership" value={stats.membership} />
         </View>
 
         <TouchableOpacity style={styles.btnStok} activeOpacity={0.8}>

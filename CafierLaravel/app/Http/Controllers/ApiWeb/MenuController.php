@@ -10,7 +10,8 @@ class MenuController extends Controller
 {
     public function index()
     {
-        $menus = Product::all();
+        // Urutin berdasarkan Kategori (1: Coffee, 2: Non Coffee, 3: Dessert) lalu secara Abjad
+        $menus = Product::orderBy('category_id', 'asc')->orderBy('name', 'asc')->get();
         
         return response()->json([
             'success' => true,
@@ -25,15 +26,22 @@ class MenuController extends Controller
             'name' => 'required|string',
             'price' => 'required|numeric',
             'description' => 'nullable|string',
-            'category_id' => 'required'
+            'category_id' => 'required',
+            'image' => 'nullable|image|max:2048'
         ]);
 
-        Product::create([
+        $data = [
             'name' => $request->name,
             'price' => $request->price,
             'description' => $request->description,
             'category_id' => $request->category_id,
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        Product::create($data);
 
         return response()->json([
             'success' => true,
@@ -45,12 +53,22 @@ class MenuController extends Controller
     {
         $product = Product::findOrFail($id);
 
-        $product->update([
+        $request->validate([
+            'image' => 'nullable|image|max:2048'
+        ]);
+
+        $data = [
             'name' => $request->name,
             'price' => $request->price,
             'description' => $request->description,
             'category_id' => $request->category_id,
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        $product->update($data);
 
         return response()->json([
             'success' => true,

@@ -31,4 +31,5 @@ Route::middleware(['api_auth'])->group(function () {
     Route::delete('/daftar-membership/delete/{id}', [MembershipController::class, 'destroy']);
 
     Route::get('/pengeluaran-pemasukan', [PemasukanController::class, 'index'])->name('keuangan.index');
+    Route::post('/pengeluaran-pemasukan/expense', [PemasukanController::class, 'storeExpense'])->name('keuangan.storeExpense');
 });
